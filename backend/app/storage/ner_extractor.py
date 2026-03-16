@@ -21,12 +21,12 @@ ONTOLOGY:
 {ontology_description}
 
 RULES:
-1. Only extract entity types and relation types defined in the ontology.
+1. Extract ALL named entities (people, organizations, places, etc.) from the text. Use ontology types when they fit, but also use generic types like "Person", "Organization", "Location", "Entity" for anything that doesn't match a specific ontology type. Do NOT skip entities just because they lack a matching ontology type.
 2. Normalize entity names: strip whitespace, use canonical form (e.g., "Jack Ma" not "ma jack").
-3. Each entity must have: name, type (from ontology), and optional attributes.
-4. Each relation must have: source entity name, target entity name, type (from ontology), and a fact sentence describing the relationship.
+3. Each entity must have: name, type (from ontology or a generic type), and optional attributes.
+4. Each relation must have: source entity name, target entity name, type (from ontology or a descriptive type like RELATED_TO, PART_OF, LOCATED_IN), and a fact sentence describing the relationship.
 5. If no entities or relations are found, return empty lists.
-6. Be precise — only extract what is explicitly stated or strongly implied in the text.
+6. Be thorough — extract every person, organization, place, and concept mentioned in the text. More entities is better than fewer.
 
 Return ONLY valid JSON in this exact format:
 {{
@@ -82,10 +82,17 @@ class NERExtractor:
             try:
                 result = self.llm.chat_json(
                     messages=messages,
-                    temperature=0.1,  # Low temp for extraction precision
+                    temperature=0.35,  # Balanced: precise but catches implicit entities
                     max_tokens=4096,
                 )
-                return self._validate_and_clean(result, ontology)
+                logger.info(f"[NER] Raw LLM result: {len(result.get('entities', []))} entities, {len(result.get('relations', []))} relations")
+                if not result.get('entities') and not result.get('relations'):
+                    logger.warning(f"[NER] LLM returned empty extraction. Raw keys: {list(result.keys())}")
+                    logger.warning(f"[NER] Raw result preview: {str(result)[:500]}")
+                cleaned = self._validate_and_clean(result, ontology)
+                if len(cleaned.get('entities', [])) < len(result.get('entities', [])):
+                    logger.info(f"[NER] Validation dropped {len(result.get('entities', [])) - len(cleaned.get('entities', []))} entities")
+                return cleaned
 
             except ValueError as e:
                 last_error = e
