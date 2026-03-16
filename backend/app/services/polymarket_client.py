@@ -90,6 +90,8 @@ class PolymarketClient:
     def _parse_market(self, data: Dict[str, Any]) -> Optional[PredictionMarket]:
         """Parse raw Gamma API response into PredictionMarket"""
         try:
+            import json as _json
+
             # Gamma API returns tokens with prices for each outcome
             tokens = data.get('tokens', [])
             outcomes = []
@@ -100,10 +102,22 @@ class PolymarketClient:
                     outcomes.append(token.get('outcome', 'Unknown'))
                     prices.append(float(token.get('price', 0)))
             else:
-                # Fallback: try outcomes/outcomePrices fields
-                outcomes = data.get('outcomes', ['Yes', 'No'])
-                raw_prices = data.get('outcomePrices', ['0.5', '0.5'])
-                prices = [float(p) for p in raw_prices] if raw_prices else [0.5, 0.5]
+                # Gamma API returns outcomes/outcomePrices as JSON strings
+                raw_outcomes = data.get('outcomes', '["Yes", "No"]')
+                raw_prices = data.get('outcomePrices', '["0.5", "0.5"]')
+
+                # Parse if string, use directly if already list
+                if isinstance(raw_outcomes, str):
+                    outcomes = _json.loads(raw_outcomes)
+                else:
+                    outcomes = raw_outcomes or ['Yes', 'No']
+
+                if isinstance(raw_prices, str):
+                    prices = [float(p) for p in _json.loads(raw_prices)]
+                elif isinstance(raw_prices, list):
+                    prices = [float(p) for p in raw_prices]
+                else:
+                    prices = [0.5, 0.5]
 
             return PredictionMarket(
                 condition_id=data.get('conditionId', data.get('condition_id', '')),
