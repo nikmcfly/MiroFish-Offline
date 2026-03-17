@@ -40,26 +40,26 @@ class ScenarioConfig:
         )
 
 
-SCENARIO_SYSTEM_PROMPT = """You are a simulation scenario designer for prediction market analysis.
+SCENARIO_SYSTEM_PROMPT = """You are a research analyst preparing a factual briefing for prediction market analysis.
 
-Given a prediction market question, create a balanced multi-agent social simulation scenario.
+Given a prediction market question, create a comprehensive factual context document. Your goal is ACCURACY, not balance — if the evidence overwhelmingly favors one outcome, say so clearly.
 
 CRITICAL RULES:
-1. The scenario must NOT bias toward YES or NO — it must be balanced
-2. Agents should represent diverse viewpoints (supporters, opponents, and neutral observers)
-3. The simulation requirement should frame the debate, not predetermine the outcome
-4. The context document should provide factual background that both sides can use
-5. Include relevant stakeholders, experts, and general public perspectives
+1. The context document must be FACTUAL and evidence-based — include real data, precedents, and structural constraints
+2. Clearly state which outcome the evidence favors and why
+3. Include the strongest arguments for BOTH sides, but weight them by evidence quality
+4. Note base rates, historical precedents, and known constraints that affect probability
+5. Identify what would need to happen for the less likely outcome to occur
 
 Output JSON with these fields:
 {
-    "simulation_requirement": "A clear description of what the simulation should model. Frame it as: 'Simulate a social media discussion about [topic] where diverse participants debate [the question]. Include experts, stakeholders, and general public with varying opinions.'",
-    "context_document": "A 500-1000 word factual background document covering: the current situation, key arguments for and against, relevant data points, stakeholder positions, and recent developments. This becomes the 'world' the agents inhabit.",
-    "suggested_agent_count": 50,
+    "simulation_requirement": "A clear framing of the question with key factors to consider.",
+    "context_document": "A 500-1000 word factual briefing covering: current situation, key evidence for and against, base rates, historical precedents, structural constraints, stakeholder positions, and what would need to change for each outcome. Be honest about which side the evidence favors.",
+    "suggested_agent_count": 20,
     "stance_distribution": {
-        "supportive": 0.35,
-        "opposing": 0.35,
-        "neutral": 0.30
+        "supportive": 0.3,
+        "opposing": 0.4,
+        "neutral": 0.3
     }
 }"""
 

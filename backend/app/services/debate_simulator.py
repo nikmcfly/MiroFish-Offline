@@ -14,20 +14,25 @@ from ..utils.logger import get_logger
 
 logger = get_logger('mirofish.debate_simulator')
 
-DEBATE_SYSTEM_PROMPT = """You are simulating a multi-perspective online debate about a prediction market question.
+DEBATE_SYSTEM_PROMPT = """You are simulating a realistic online debate about a prediction market question.
 
-Generate a realistic Reddit-style discussion with 15-25 posts from diverse participants. Each post should represent a distinct perspective and argument.
+Generate a Reddit-style discussion with 20 posts from diverse participants. The distribution of stances should reflect the ACTUAL WEIGHT OF EVIDENCE — do NOT force a 50/50 split.
 
-CRITICAL RULES:
-1. Include roughly equal representation of supporters (YES), opponents (NO), and neutral/analytical voices
-2. Posts should contain substantive arguments, not just opinions
-3. Include domain experts, general public, contrarians, and fence-sitters
-4. Arguments should reference real-world evidence, data, historical precedents
-5. Some posts should respond to or rebut other arguments
-6. Do NOT let your own assessment bias the distribution — present the strongest case for BOTH sides
+KEY RULES:
+1. If the evidence strongly favors one outcome, most posts should reflect that. A question with a 90% likely NO should have most participants arguing NO.
+2. Each participant should argue based on real evidence, data, precedent, and domain knowledge — not just opinions.
+3. Include domain experts, general public, contrarians, and analysts.
+4. Contrarians exist in every debate — include 2-3 posts arguing the minority position even if the evidence is lopsided.
+5. Confidence scores should reflect argument strength: a weak contrarian argument gets 0.3, a strong evidence-backed argument gets 0.9.
+6. Consider: base rates, historical precedent, structural factors, incentives, and known constraints.
+7. Think step by step about what would ACTUALLY happen based on the evidence before generating the debate.
 
-Output JSON with this exact structure:
+BEFORE generating posts, internally assess: given all available evidence, what is the realistic probability of YES? Then generate a debate whose stance distribution roughly matches that assessment.
+
+Output JSON:
 {
+    "estimated_probability": 0.XX,
+    "reasoning": "Brief explanation of your probability estimate before the debate",
     "posts": [
         {
             "author": "username",
@@ -81,12 +86,14 @@ class DebateSimulator:
         )
 
         posts = result.get("posts", [])
-        logger.info(f"Debate generated {len(posts)} posts")
+        llm_estimate = result.get("estimated_probability")
+        logger.info(f"Debate generated {len(posts)} posts, LLM estimate: {llm_estimate}")
 
         return self._analyze_posts(
             posts,
             strongest_for=result.get("strongest_for", ""),
             strongest_against=result.get("strongest_against", ""),
+            llm_estimate=llm_estimate,
         )
 
     def _build_prompt(self, market: PredictionMarket, context: str) -> str:
@@ -116,8 +123,9 @@ class DebateSimulator:
         posts: List[Dict[str, Any]],
         strongest_for: str = "",
         strongest_against: str = "",
+        llm_estimate: float = None,
     ) -> SentimentResult:
-        """Compute probability from debate posts"""
+        """Compute probability from debate posts + LLM direct estimate"""
         stance_counts = {"for": 0, "against": 0, "neutral": 0}
         weighted_for = 0.0
         weighted_against = 0.0
@@ -144,14 +152,22 @@ class DebateSimulator:
                 if key_arg:
                     args_against.append(key_arg)
 
-        # P(Yes) = weighted_for / (weighted_for + weighted_against)
+        # Stance-based probability
         total_opinionated = weighted_for + weighted_against
         if total_opinionated > 0:
-            sim_prob = weighted_for / total_opinionated
+            stance_prob = weighted_for / total_opinionated
         else:
-            sim_prob = 0.5
+            stance_prob = 0.5
 
-        # Confidence based on sample size and agreement
+        # Blend: 50% LLM direct estimate + 50% stance-derived probability
+        # The LLM estimate captures base rates and domain knowledge
+        # The stance distribution captures the argument quality
+        if llm_estimate is not None and 0 <= llm_estimate <= 1:
+            sim_prob = 0.5 * llm_estimate + 0.5 * stance_prob
+        else:
+            sim_prob = stance_prob
+
+        # Confidence based on agreement strength
         total_classified = stance_counts["for"] + stance_counts["against"]
         if total_classified > 0:
             agreement = max(stance_counts["for"], stance_counts["against"]) / total_classified
