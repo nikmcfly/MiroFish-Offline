@@ -420,12 +420,9 @@ import { fetchMarkets, startPredictionRun, getRunStatus, getRun, listRuns } from
 // ═══════ PIPELINE STAGE DEFINITIONS ═══════
 const pipelineStages = [
   { key: 'fetching_market', label: 'Fetch Market', desc: 'Loading market data' },
-  { key: 'generating_scenario', label: 'Generate Scenario', desc: 'LLM creates balanced simulation' },
-  { key: 'creating_project', label: 'Create Project', desc: 'Setting up simulation environment' },
-  { key: 'building_graph', label: 'Build Graph', desc: 'Knowledge graph from context' },
-  { key: 'preparing_simulation', label: 'Prepare Agents', desc: 'Generating agent profiles' },
-  { key: 'running_simulation', label: 'Run Simulation', desc: 'Multi-agent Reddit discourse' },
-  { key: 'analyzing', label: 'Analyze Sentiment', desc: 'Classifying stances via LLM' },
+  { key: 'generating_scenario', label: 'Generate Scenario', desc: 'LLM creates balanced context' },
+  { key: 'running_simulation', label: 'Simulate Debate', desc: 'Multi-perspective discourse via LLM' },
+  { key: 'analyzing', label: 'Compute Signal', desc: 'Probability estimation from stances' },
 ]
 
 // ═══════ STATE ═══════
@@ -445,9 +442,8 @@ let pollInterval = null
 const progressPercent = computed(() => {
   if (!activeRun.value) return 0
   const map = {
-    fetching_market: 5, generating_scenario: 15, creating_project: 22,
-    building_graph: 38, preparing_simulation: 52, running_simulation: 72,
-    analyzing: 92, completed: 100,
+    fetching_market: 5, generating_scenario: 25,
+    running_simulation: 60, analyzing: 90, completed: 100,
   }
   return map[activeRun.value.status] || 0
 })

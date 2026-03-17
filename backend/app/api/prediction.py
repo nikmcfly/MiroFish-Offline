@@ -4,7 +4,7 @@ Prediction Market API routes
 
 import traceback
 import threading
-from flask import request, jsonify, current_app
+from flask import request, jsonify
 
 from . import prediction_bp
 from ..config import Config
@@ -91,9 +91,6 @@ def start_prediction_run():
             metadata={"run_id": run.run_id, "market_title": market.title},
         )
 
-        # Get storage from app context
-        storage = current_app.extensions.get('neo4j_storage')
-
         def run_pipeline():
             try:
                 task_manager.update_task(
@@ -104,15 +101,11 @@ def start_prediction_run():
                 )
 
                 def progress_callback(stage, message):
-                    # Map stages to progress percentages
                     stage_progress = {
                         "fetching_market": 5,
-                        "generating_scenario": 15,
-                        "creating_project": 20,
-                        "building_graph": 35,
-                        "preparing_simulation": 50,
-                        "running_simulation": 70,
-                        "analyzing": 90,
+                        "generating_scenario": 25,
+                        "running_simulation": 60,
+                        "analyzing": 85,
                         "completed": 100,
                     }
                     progress = stage_progress.get(stage, 50)
@@ -122,7 +115,7 @@ def start_prediction_run():
                         message=message,
                     )
 
-                manager = PredictionManager(storage=storage)
+                manager = PredictionManager()
                 result = manager.run_prediction(
                     market=market,
                     run=run,
