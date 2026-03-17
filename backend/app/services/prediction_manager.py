@@ -86,9 +86,17 @@ class PredictionManager:
         logger.info(f"[{run.run_id}] {status.value}: {message}")
 
     def _generate_signal(self, market: PredictionMarket, sentiment: SentimentResult) -> TradingSignal:
-        """Compare simulated probability vs market price to generate trading signal"""
+        """Compare simulated probability vs market price to generate trading signal.
+
+        Applies three calibration corrections learned from backtesting:
+        1. Market regression: blend SimP 30% toward market price (markets are informative)
+        2. Confidence penalty for large edges (huge disagreements usually = model error)
+        3. Short-dated market dampening (less time for unlikely events)
+        """
+        from datetime import datetime
+
         market_prob = market.prices[0] if market.prices else 0.5
-        sim_prob = sentiment.simulated_probability
+        raw_sim_prob = sentiment.simulated_probability
 
         if sentiment.total_posts_analyzed == 0 or sentiment.confidence < 0.05:
             return TradingSignal(
@@ -96,37 +104,78 @@ class PredictionManager:
                 edge=0.0,
                 confidence=0.0,
                 reasoning="Insufficient debate data for signal generation.",
-                simulated_probability=sim_prob,
+                simulated_probability=raw_sim_prob,
                 market_probability=market_prob,
             )
+
+        # Calibration 1: Regress toward market price by 30%
+        # LLMs have "possibility bias" — they overweight unlikely events.
+        # Liquid markets contain real information from real money.
+        MARKET_WEIGHT = 0.30
+        sim_prob = (1 - MARKET_WEIGHT) * raw_sim_prob + MARKET_WEIGHT * market_prob
+
+        # Calibration 2: Short-dated dampening
+        # If market ends within 14 days, regress more aggressively (less time for surprises)
+        days_to_end = None
+        if market.end_date:
+            try:
+                end_dt = datetime.fromisoformat(market.end_date.replace('Z', '+00:00'))
+                days_to_end = (end_dt - datetime.now(end_dt.tzinfo)).days
+                if days_to_end is not None and days_to_end < 14:
+                    # Additional 20% regression for short-dated markets
+                    sim_prob = 0.8 * sim_prob + 0.2 * market_prob
+            except (ValueError, TypeError):
+                pass
 
         edge = sim_prob - market_prob
         threshold = Config.PREDICTION_SIGNAL_THRESHOLD
 
+        # Calibration 3: Confidence penalty for large edges
+        # A 50%+ edge against a liquid market is almost certainly wrong.
+        base_confidence = sentiment.confidence
+        abs_edge = abs(edge)
+        if abs_edge > 0.40:
+            confidence = base_confidence * 0.2  # Massive discount
+        elif abs_edge > 0.25:
+            confidence = base_confidence * 0.5
+        elif abs_edge > 0.15:
+            confidence = base_confidence * 0.8
+        else:
+            confidence = base_confidence
+
+        # Build reasoning
+        parts = []
         if edge > threshold:
             direction = "BUY_YES"
-            reasoning = (
-                f"Debate consensus ({sim_prob:.1%}) is {edge:.1%} higher than "
-                f"market price ({market_prob:.1%}). Arguments favor YES."
+            parts.append(
+                f"Calibrated probability ({sim_prob:.1%}) is {edge:.1%} above "
+                f"market ({market_prob:.1%})."
             )
         elif edge < -threshold:
             direction = "BUY_NO"
-            reasoning = (
-                f"Debate consensus ({sim_prob:.1%}) is {abs(edge):.1%} lower than "
-                f"market price ({market_prob:.1%}). Arguments favor NO."
+            parts.append(
+                f"Calibrated probability ({sim_prob:.1%}) is {abs(edge):.1%} below "
+                f"market ({market_prob:.1%})."
             )
         else:
             direction = "HOLD"
-            reasoning = (
-                f"Debate consensus ({sim_prob:.1%}) is within threshold of "
-                f"market price ({market_prob:.1%}). No clear edge."
+            parts.append(
+                f"Calibrated probability ({sim_prob:.1%}) is within threshold of "
+                f"market ({market_prob:.1%}). No clear edge."
             )
+
+        if raw_sim_prob != sim_prob:
+            parts.append(f"Raw debate estimate was {raw_sim_prob:.1%}, adjusted via market regression.")
+        if days_to_end is not None and days_to_end < 14:
+            parts.append(f"Short-dated market ({days_to_end}d remaining) — extra dampening applied.")
+        if abs_edge > 0.25:
+            parts.append(f"Large edge penalized — confidence reduced (markets are usually right).")
 
         return TradingSignal(
             direction=direction,
             edge=edge,
-            confidence=sentiment.confidence,
-            reasoning=reasoning,
+            confidence=confidence,
+            reasoning=" ".join(parts),
             simulated_probability=sim_prob,
             market_probability=market_prob,
         )
