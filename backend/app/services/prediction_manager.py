@@ -211,7 +211,7 @@ class PredictionManager:
 
         raise RuntimeError(f"{task_name} timed out after {timeout}s")
 
-    def _wait_for_simulation(self, simulation_id, callback, run, timeout=3600):
+    def _wait_for_simulation(self, simulation_id, callback, run, timeout=7200):
         """Poll simulation runner until it completes"""
         start = time.time()
         while time.time() - start < timeout:

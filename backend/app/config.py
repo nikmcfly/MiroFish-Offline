@@ -72,7 +72,7 @@ class Config:
     # Prediction Market配置
     POLYMARKET_GAMMA_URL = os.environ.get('POLYMARKET_GAMMA_URL', 'https://gamma-api.polymarket.com')
     PREDICTION_DEFAULT_AGENTS = int(os.environ.get('PREDICTION_DEFAULT_AGENTS', '50'))
-    PREDICTION_DEFAULT_ROUNDS = int(os.environ.get('PREDICTION_DEFAULT_ROUNDS', '5'))
+    PREDICTION_DEFAULT_ROUNDS = int(os.environ.get('PREDICTION_DEFAULT_ROUNDS', '2'))
     PREDICTION_SIGNAL_THRESHOLD = float(os.environ.get('PREDICTION_SIGNAL_THRESHOLD', '0.10'))
     PREDICTION_TRADE_ENABLED = os.environ.get('PREDICTION_TRADE_ENABLED', 'false').lower() == 'true'
     PREDICTION_DATA_DIR = os.path.join(os.path.dirname(__file__), '../uploads/predictions')
