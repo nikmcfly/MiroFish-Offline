@@ -1,0 +1,382 @@
+[
+  {
+    "title": "Will Alexandria Ocasio-Cortez win the 2028 US Presidential E",
+    "days_left": 964,
+    "market_p": 0.0465,
+    "sim_p": 0.0962,
+    "direction": "HOLD",
+    "edge": 0.0497,
+    "confidence": 0.75,
+    "end_date": "2028-11-07",
+    "condition_id": "0xf232b565995e4b3a3e7fa6cef775eeff1cecd20ad7c013cb9fc8dadabfe279a9",
+    "for_args": [
+      "Demographic changes making Gen Z and Millennials over 50% of the electorate by 2028, combined with potential economic or climate crises, could make AOC's progressive message mainstream rather than radical.",
+      "Demographic changes and potential economic/climate crises by 2028 could make AOC's progressive message mainstream with a younger electorate."
+    ],
+    "against_args": [
+      "The electoral college requires winning moderate swing voters in states like Pennsylvania, Michigan, and Wisconsin, where AOC's progressive positions consistently poll poorly and her 55%+ unfavorability among independents creates an insurmountable barrier.",
+      "Structural barriers including electoral college dynamics and historical precedent of progressive House members failing to win presidencies make this extremely unlikely."
+    ]
+  },
+  {
+    "title": "Will USA win the 2026 World Baseball Classic?",
+    "days_left": -1,
+    "market_p": 0.3,
+    "sim_p": 0.2452,
+    "direction": "HOLD",
+    "edge": -0.0548,
+    "confidence": 0.7368,
+    "end_date": "2026-03-17",
+    "condition_id": "0x9f297733ff47d610334d4195c109296df51ec3fac02af7abed55adacd4bddacc",
+    "for_args": [
+      "USA's massive talent advantage with 70% of MLB players should eventually overcome historical issues if proper preparation and player commitment align.",
+      "Superior talent pool should eventually overcome historical underperformance with proper preparation."
+    ],
+    "against_args": [
+      "USA's 0-5 WBC record despite consistent talent superiority reflects systematic structural disadvantages in preparation, motivation, and team chemistry that won't change by 2026.",
+      "USA's 0-5 WBC record reflects structural disadvantages that persist regardless of talent level."
+    ]
+  },
+  {
+    "title": "Will Anthropic have the best AI model at the end of March 20",
+    "days_left": 12,
+    "market_p": 0.924,
+    "sim_p": 0.5759,
+    "direction": "BUY_NO",
+    "edge": -0.3481,
+    "confidence": 0.35,
+    "end_date": "2026-03-31",
+    "condition_id": "0x5cd80b8fd72f37c78260a4f8fa0d5bbaaad3adffcfc2c0705e05ee20b8672908",
+    "for_args": [
+      "Anthropic's constitutional AI approach and focus on safety/reliability provides a sustainable competitive advantage as arena scores increasingly reflect user preference for trustworthy models over raw capability.",
+      "Anthropic's superior training methodology and constitutional AI approach could maintain their competitive edge despite resource constraints."
+    ],
+    "against_args": [
+      "Historical precedent shows no company has maintained arena leadership for more than 6-8 months consistently, making a 16-month sustained dominance by Anthropic against better-funded competitors highly unlikely.",
+      "Historical volatility in arena leadership makes sustained dominance highly unlikely over 16 months."
+    ]
+  },
+  {
+    "title": "US escorts commercial ship through Hormuz by March 31?",
+    "days_left": 12,
+    "market_p": 0.225,
+    "sim_p": 0.5329,
+    "direction": "BUY_YES",
+    "edge": 0.3079,
+    "confidence": 0.4,
+    "end_date": "2026-03-31",
+    "condition_id": "0xcab77c44e435400dba6d3ab41eaef2a504bebd7e2d080ec18d14cf45ddf41784",
+    "for_args": [
+      "Historical precedent is overwhelming - the US has repeatedly conducted escort operations in Hormuz during tensions, with established operational procedures, existing Fifth Fleet infrastructure, and powerful commercial pressure creating predictable response patterns.",
+      "Strong historical precedent and existing operational capability make escort operations highly likely during the 26-month timeframe."
+    ],
+    "against_args": [
+      "Current tensions don't approach wartime levels that triggered historical escort operations, and the US prefers multilateral diplomatic solutions over unilateral military action that risks escalation.",
+      "Current tensions don't match historical wartime contexts that previously triggered escort operations."
+    ]
+  },
+  {
+    "title": "Will Claude 5 be released by March 31, 2026?",
+    "days_left": null,
+    "market_p": 0.0585,
+    "sim_p": 0.0706,
+    "direction": "HOLD",
+    "edge": 0.0121,
+    "confidence": 0.85,
+    "end_date": "",
+    "condition_id": "0x2821de9fbe90c422cb220dad69fe44dfdea8fdf8fb779e562b44be6db8c1daff",
+    "for_args": [
+      "Competitive pressure from GPT-5 and unlimited AWS compute through Amazon partnership could force acceleration of development timelines.",
+      "Competitive pressure and unlimited AWS compute could force Anthropic to accelerate development and potentially skip version numbers."
+    ],
+    "against_args": [
+      "Anthropic's safety-first culture combined with exponentially increasing compute requirements and regulatory constraints make March 2026 technically and strategically impossible.",
+      "Historical release patterns and exponentially increasing development complexity make March 2026 extremely unlikely."
+    ]
+  },
+  {
+    "title": "Will France win Eurovision 2026?",
+    "days_left": 58,
+    "market_p": 0.116,
+    "sim_p": 0.1209,
+    "direction": "HOLD",
+    "edge": 0.0049,
+    "confidence": 0.7222,
+    "end_date": "2026-05-16",
+    "condition_id": "0xac5a968ce63080fd83fcb9a8eb73512f0ad4f0c689a86740b37969f5fb62bb78",
+    "for_args": [
+      "France's near-victory in 2021 with Barbara Pravi proves they can compete at the highest level and only need one exceptional year to break their drought.",
+      "Recent strong performances and Big Five status provide a foundation for potential victory with the right song."
+    ],
+    "against_args": [
+      "France's 49-year Eurovision drought combined with systematic voting disadvantages and increasingly professional competition makes victory statistically very unlikely despite recent improvements.",
+      "France's 49-year drought and structural voting disadvantages make victory highly unlikely despite recent improvements."
+    ]
+  },
+  {
+    "title": "Will Lovable be acquired before 2027?",
+    "days_left": 287,
+    "market_p": 0.35,
+    "sim_p": 0.4646,
+    "direction": "BUY_YES",
+    "edge": 0.1146,
+    "confidence": 0.5625,
+    "end_date": "2026-12-31",
+    "condition_id": "0x8452ab75745818363066cb7ccca1accedb926eb71c3098cc5458395bcbf65c3f",
+    "for_args": [
+      "Strategic acquirers like Microsoft desperately need AI-powered no-code capabilities for their existing platforms, and the 3-year timeline provides ample opportunity for Lovable to demonstrate value.",
+      "Strong M&A precedents and strategic positioning in hot AI/dev tools intersection make acquisition likely."
+    ],
+    "against_args": [
+      "The no-code market is already saturated with established players like Webflow and Bubble who can add AI features internally, making small AI-only competitors less attractive acquisition targets.",
+      "Crowded market with established competitors and AI hype doesn't guarantee acquisition success."
+    ]
+  },
+  {
+    "title": "SCOTUS accepts sports event contract case by July 31, 2026? ",
+    "days_left": 134,
+    "market_p": 0.31,
+    "sim_p": 0.2665,
+    "direction": "HOLD",
+    "edge": -0.0435,
+    "confidence": 0.6667,
+    "end_date": "2026-07-31",
+    "condition_id": "0x139ba0e7f931f09466c0fb27fc8ddb5e77ce9d1e2bdc953a5f22765bf779452f",
+    "for_args": [
+      "Rapid evolution of prediction markets is creating regulatory gray areas that could generate circuit splits, especially if political prediction markets trigger First Amendment concerns.",
+      "Rapid evolution of prediction markets is creating regulatory gray areas that could generate the circuit splits needed for cert."
+    ],
+    "against_args": [
+      "Procedural timeline makes it nearly impossible for complex regulatory disputes to reach SCOTUS by July 2026, and the Court grants cert in only 1-2% of cases with strong preference for constitutional over technical regulatory questions.",
+      "No circuit split exists and SCOTUS rarely grants cert in specialized regulatory areas without clear jurisdictional conflicts."
+    ]
+  },
+  {
+    "title": "Will the U.S. invade Cuba in 2026?",
+    "days_left": 287,
+    "market_p": 0.325,
+    "sim_p": 0.1512,
+    "direction": "BUY_NO",
+    "edge": -0.1738,
+    "confidence": 0.68,
+    "end_date": "2026-12-31",
+    "condition_id": "0x80ebf0a88a44bf737d4047b3accd7108285c69b84257e5c684bdc4c715c81139",
+    "for_args": [
+      "Major provocation like Chinese military bases in Cuba could trigger Monroe Doctrine response despite current constraints",
+      "Major provocation like Chinese military bases could trigger invasion despite current constraints"
+    ],
+    "against_args": [
+      "Historical precedent shows invasion attempts fail catastrophically while violating international law and destroying U.S. diplomatic relationships globally",
+      "Pentagon has no strategic interest or planning for Cuban invasion given focus on great power competition"
+    ]
+  },
+  {
+    "title": "Masoud Pezeshkian out by December 31?",
+    "days_left": 287,
+    "market_p": 0.445,
+    "sim_p": 0.3975,
+    "direction": "HOLD",
+    "edge": -0.0475,
+    "confidence": 0.5294,
+    "end_date": "2026-12-31",
+    "condition_id": "0x3e80f6cc475d7940ce26db5ee997b28ee80c50170ce7aa8af2d104c947c8e5e3",
+    "for_args": [
+      "Multiple simultaneous crises (economic collapse, generational revolt, Supreme Leader succession, regional tensions) create unprecedented conditions where conservative institutions have both motivation and capability to remove the last major reformist in high office.",
+      "Current structural opposition from powerful conservative institutions creates unprecedented removal pressure."
+    ],
+    "against_args": [
+      "45 years of precedent shows only one presidential removal despite numerous severe crises, with the constitutional process requiring coordination between competing institutions that prefer constraining presidents rather than creating the instability of removal.",
+      "Historical precedent strongly favors presidential survival with only one removal in 45 years."
+    ]
+  },
+  {
+    "title": "Deel IPO before 2027?",
+    "days_left": 287,
+    "market_p": 0.175,
+    "sim_p": 0.2198,
+    "direction": "HOLD",
+    "edge": 0.0448,
+    "confidence": 0.625,
+    "end_date": "2026-12-31",
+    "condition_id": "0xd21614c016c4a911cbc8856dac53f5af6fdf222b9c82531e31aa9f9f9bf4f2a9",
+    "for_args": [
+      "Deel's 100%+ ARR growth and dominant market position in a massive TAM could drive IPO when market conditions improve by 2026",
+      "Strong fundamentals and market position will drive IPO when conditions improve"
+    ],
+    "against_args": [
+      "Current valuation math doesn't work for public markets, and regulatory compliance across 150+ countries requires multi-year restructuring incompatible with 2026 timeline",
+      "Current IPO market conditions and SaaS multiple compression make 2026 IPO highly unlikely"
+    ]
+  },
+  {
+    "title": "Will Scottie Scheffler win the 2026 Masters tournament?",
+    "days_left": 25,
+    "market_p": 0.175,
+    "sim_p": 0.2901,
+    "direction": "BUY_YES",
+    "edge": 0.1151,
+    "confidence": 0.5294,
+    "end_date": "2026-04-13",
+    "condition_id": "0xffdbbf2c3b9aa808abbcb35beb2b20a93572570aa5dd1bd1b630cade2f809f26",
+    "for_args": [
+      "Scheffler's unprecedented statistical dominance combined with Augusta National's perfect fit for his skill set (elite iron play, fast green putting, course management) makes the 17% market price significantly undervalued.",
+      "Scheffler's statistical dominance and perfect course fit make 17% odds significantly undervalued."
+    ],
+    "against_args": [
+      "Historical data shows even peak Tiger Woods rarely exceeded 25% Masters win probability, and the 2+ year timeframe introduces substantial uncertainty through injury risk, form cycles, and an exceptionally deep competitive field.",
+      "Historical precedent shows even peak Tiger rarely exceeded 25% Masters win probability, and 2+ years introduces significant uncertainty."
+    ]
+  },
+  {
+    "title": "Another crypto hack over $100m before 2027?",
+    "days_left": -76,
+    "market_p": 0.765,
+    "sim_p": 0.8156,
+    "direction": "HOLD",
+    "edge": 0.0506,
+    "confidence": 0.7895,
+    "end_date": "2026-01-01",
+    "condition_id": "0x9cad229faa8a966eb0e3a401b18aaacbe54588a458cbaf35959908d31968c2da",
+    "for_args": [
+      "Historical frequency data shows 3-5 crypto hacks exceeding $100M occur annually, making the statistical probability over 2.5 years extremely high even accounting for security improvements.",
+      "Historical frequency of 3-5 major hacks annually makes this statistically inevitable over 2.5 years."
+    ],
+    "against_args": [
+      "Industry security practices have matured significantly with universal multi-sig adoption, formal verification, massive bug bounties, and better auditing standards potentially preventing any single incident from reaching the $100M threshold.",
+      "Industry maturation and improved security practices might prevent any single hack from reaching $100M threshold."
+    ]
+  },
+  {
+    "title": "Will Russia enter Druzkhivka by June 30?",
+    "days_left": 103,
+    "market_p": 0.25,
+    "sim_p": 0.1585,
+    "direction": "HOLD",
+    "edge": -0.0915,
+    "confidence": 0.8,
+    "end_date": "2026-06-30",
+    "condition_id": "0xcbd66faaf74bf50d61ab2f63f9351f8086305dcbf16c1e3eab0ebfe576fce1c6",
+    "for_args": [
+      "Extended 30-month timeline allows for potential political changes, military adaptation, or Ukrainian defensive collapse that could dramatically alter conflict dynamics.",
+      "Extended 2.5-year timeline allows for potential momentum shifts and changes in conflict dynamics."
+    ],
+    "against_args": [
+      "Russian forces would need to advance 60-70km through multiple prepared defensive lines while their current advance rate averages under 1km per month in contested areas, making the required breakthrough mathematically and operationally impossible.",
+      "Geographic distance and established Ukrainian defensive positions make Russian capture extremely unlikely given current military realities."
+    ]
+  },
+  {
+    "title": "Will Bryson Dechambeau win the 2026 Masters tournament?",
+    "days_left": 25,
+    "market_p": 0.045,
+    "sim_p": 0.1654,
+    "direction": "BUY_YES",
+    "edge": 0.1204,
+    "confidence": 0.6111,
+    "end_date": "2026-04-13",
+    "condition_id": "0x2b38ba268b5236105755199984f1609572e22c933f514e70ea8350cd0f9c0bc1",
+    "for_args": [
+      "DeChambeau's dramatic improvement in 2024, including his U.S. Open win and enhanced mental maturity, combined with Augusta's recent lengthening that favors his distance advantage, suggests the 4% market price undervalues his potential.",
+      "Recent statistical improvements and Augusta's lengthening favor DeChambeau more than the 4% market price suggests."
+    ],
+    "against_args": [
+      "DeChambeau's historically poor Augusta performance (zero top-10s in 6 attempts), combined with statistical evidence showing his putting and short game deficits at the course create an insurmountable scoring disadvantage against elite competition.",
+      "Augusta's unique demands for precision and course management don't align with DeChambeau's power-first approach despite recent improvements."
+    ]
+  },
+  {
+    "title": "Will Alfonso L\u00f3pez Chau win the 2026 Peruvian presidential e",
+    "days_left": 24,
+    "market_p": 0.162,
+    "sim_p": 0.1188,
+    "direction": "HOLD",
+    "edge": -0.0432,
+    "confidence": 0.8333,
+    "end_date": "2026-04-12",
+    "condition_id": "0x78f5630bafa15147941daa2fd2926b43febe6af1544cd9d8527b226914f3ca11",
+    "for_args": [
+      "Peru's extreme political instability and anti-establishment sentiment could create an opening for a clean outsider like L\u00f3pez Chau if major scandals hit frontrunners",
+      "Peru's political instability and anti-establishment sentiment could create an opening for an outsider like L\u00f3pez Chau."
+    ],
+    "against_args": [
+      "L\u00f3pez Chau lacks all the fundamental requirements for presidential victory in Peru: name recognition, regional infrastructure, institutional backing, and performance on key predictive metrics",
+      "L\u00f3pez Chau lacks the fundamental structural advantages needed to win in Peru's fragmented political system."
+    ]
+  },
+  {
+    "title": "Will James Talarico win the Texas Democratic Senate Primary ",
+    "days_left": 256,
+    "market_p": 0.9505,
+    "sim_p": 0.9205,
+    "direction": "HOLD",
+    "edge": -0.03,
+    "confidence": 0.75,
+    "end_date": "2026-11-30",
+    "condition_id": "0xd20b0d0467c4e4577e82ddb9f1364f8044cff2568b801806f98570d5c18f0b24",
+    "for_args": [
+      "Multiple sources confirm Texas Secretary of State certified results showing Talarico won by exactly 6.23%, which falls clearly within the required 6.00-6.50% margin range.",
+      "Official certified results show Talarico won by 6.23%, which falls within the required 6.00-6.50% range."
+    ],
+    "against_args": [
+      "The suspiciously narrow 0.5% margin window and high market pricing before official resolution suggests potential insider trading or market manipulation.",
+      "The narrow margin window and unresolved market status suggest potential uncertainty in final vote counts."
+    ]
+  },
+  {
+    "title": "SpaceX Starship fully reusable before 2027?",
+    "days_left": 287,
+    "market_p": 0.415,
+    "sim_p": 0.2815,
+    "direction": "BUY_NO",
+    "edge": -0.1335,
+    "confidence": 0.6842,
+    "end_date": "2026-12-31",
+    "condition_id": "0x0a1b551058f78174cf64ed9d61edb103a76c4df88232ee1188dbc9e390896e7d",
+    "for_args": [
+      "SpaceX has unlimited resources, existential business motivation, and a track record of achieving seemingly impossible breakthroughs that surprised skeptics, with the market resolution potentially requiring only announcement rather than proven operational capability.",
+      "SpaceX's track record of achieving seemingly impossible goals despite expert skepticism."
+    ],
+    "against_args": [
+      "The technical challenges are unprecedented in aerospace history, current test results show fundamental unsolved problems, and even SpaceX's internal timelines are 2-3 years later than public statements, with validation requirements making the timeline physically impossible.",
+      "Technical complexity and validation timelines make 2026 deadline physically unrealistic given current progress."
+    ]
+  },
+  {
+    "title": "Will a province schedule a referendum to leave Canada before",
+    "days_left": 287,
+    "market_p": 0.485,
+    "sim_p": 0.3152,
+    "direction": "BUY_NO",
+    "edge": -0.1698,
+    "confidence": 0.5333,
+    "end_date": "2026-12-31",
+    "condition_id": "0x006e3bc30b325c9cd4e4a35e33738e7f49634dc353f8495303d511b875d8ad5b",
+    "for_args": [
+      "The PQ could win power by 2026 and schedule a referendum as part of their electoral mandate, especially if federal-provincial tensions escalate over energy policy or constitutional issues.",
+      "Sovereignty movements can mobilize quickly under the right leadership and circumstances."
+    ],
+    "against_args": [
+      "Constitutional law creates nearly insurmountable barriers to legitimate referendum scheduling, requiring federal cooperation that has no incentive to be provided given current low support levels for independence across all provinces.",
+      "Current polling and political dynamics don't support the conditions needed for referendum scheduling."
+    ]
+  },
+  {
+    "title": "OpenAI receives federal backstop for infrastructure before J",
+    "days_left": 103,
+    "market_p": 0.062,
+    "sim_p": 0.0711,
+    "direction": "HOLD",
+    "edge": 0.0091,
+    "confidence": 0.85,
+    "end_date": "2026-06-30",
+    "condition_id": "0x388459f1cfd0d310154e13f16f49d31fd301e5e3502072c8b09d3a0697b2823f",
+    "for_args": [
+      "Strategic competition with China could force unconventional federal support if AI leadership becomes viewed as an existential national security issue.",
+      "National security imperatives could justify creative federal support mechanisms."
+    ],
+    "against_args": [
+      "OpenAI's $157B valuation and successful private fundraising eliminate any economic or political justification for taxpayer backing of an already-profitable company.",
+      "OpenAI's high valuation and successful private fundraising eliminate the political justification for federal backing."
+    ]
+  }
+]

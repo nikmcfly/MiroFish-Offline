@@ -1,0 +1,95 @@
+{
+  "scored": [],
+  "unresolved": [
+    {
+      "title": "Will SC Braga win on 2026-03-18?",
+      "direction": "HOLD",
+      "sim_p": 0.6031,
+      "market_p": 0.655
+    },
+    {
+      "title": "Will Tottenham Hotspur FC win on 2026-03-18?",
+      "direction": "HOLD",
+      "sim_p": 0.4014,
+      "market_p": 0.385
+    },
+    {
+      "title": "Will Liverpool FC win on 2026-03-18?",
+      "direction": "HOLD",
+      "sim_p": 0.7778,
+      "market_p": 0.755
+    },
+    {
+      "title": "Will Cristian Sanabria win the 2026 Sucre mayoral election?",
+      "direction": "HOLD",
+      "sim_p": 0.462,
+      "market_p": 0.49
+    },
+    {
+      "title": "Will Fluminense FC win on 2026-03-18?",
+      "direction": "HOLD",
+      "sim_p": 0.4064,
+      "market_p": 0.405
+    },
+    {
+      "title": "Miami Open: Zizou Bergs vs Jenson Brooksby",
+      "direction": "HOLD",
+      "sim_p": 0.5287,
+      "market_p": 0.435
+    },
+    {
+      "title": "LoL: BNK FEARX vs Team Secret Whales - Game 4 Winner",
+      "direction": "HOLD",
+      "sim_p": 0.655,
+      "market_p": 0.64
+    },
+    {
+      "title": "Will \"Project Hail Mary\" Opening Weekend Box Office be betwe",
+      "direction": "HOLD",
+      "sim_p": 0.0655,
+      "market_p": 0.022
+    },
+    {
+      "title": "Will Mojtaba Khamenei tweet again on March 17?",
+      "direction": "HOLD",
+      "sim_p": 0.0954,
+      "market_p": 0.12
+    },
+    {
+      "title": "Call of Duty: Paris Gentle Mates vs FaZe Vegas (BO5) - Call ",
+      "direction": "HOLD",
+      "sim_p": 0.4124,
+      "market_p": 0.51
+    },
+    {
+      "title": "Will Trump say \"No Inflation\" this week? (March 22)",
+      "direction": "BUY_NO",
+      "sim_p": 0.3316,
+      "market_p": 0.45
+    },
+    {
+      "title": "Will the Slovenian People\u2019s Party (SLS) win the second most ",
+      "direction": "HOLD",
+      "sim_p": 0.0444,
+      "market_p": 0.021
+    },
+    {
+      "title": "Counter-Strike: Vitality vs 9z - Map 1 Winner",
+      "direction": "HOLD",
+      "sim_p": 0.8204,
+      "market_p": 0.825
+    },
+    {
+      "title": "Zadar: Jonas Forejtek vs Andrej Nedic",
+      "direction": "HOLD",
+      "sim_p": 0.6442,
+      "market_p": 0.645
+    },
+    {
+      "title": "Will Khamenei post 80-99 posts from March 17 to March 24, 20",
+      "direction": "HOLD",
+      "sim_p": 0.0379,
+      "market_p": 0.022
+    }
+  ]
+}
