@@ -226,6 +226,75 @@
             </div>
           </div>
 
+          <!-- Category Breakdown -->
+          <div v-if="currentRun && currentRun.metrics?.category_metrics" class="bt-panel">
+            <div class="bt-panel-head">
+              <div class="bt-panel-title">
+                <span class="bt-dot"></span>
+                Category Breakdown
+              </div>
+            </div>
+            <div class="bt-table-wrap">
+              <table class="bt-table">
+                <thead>
+                  <tr>
+                    <th>Category</th>
+                    <th>Accuracy</th>
+                    <th>Brier</th>
+                    <th>ROI</th>
+                    <th>N</th>
+                    <th>Avg Edge</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="(metrics, cat) in currentRun.metrics.category_metrics"
+                    :key="cat"
+                    class="bt-table-row"
+                  >
+                    <td><span class="category-badge">{{ cat }}</span></td>
+                    <td class="col-num">{{ formatPct(metrics.accuracy) }}</td>
+                    <td class="col-num">{{ formatNum(metrics.brier_score) }}</td>
+                    <td class="col-num" :class="edgeClass(metrics.roi)">{{ formatPct(metrics.roi) }}</td>
+                    <td class="col-num">{{ metrics.markets_tested }}</td>
+                    <td class="col-num" :class="edgeClass(metrics.avg_edge)">
+                      {{ metrics.avg_edge != null ? (metrics.avg_edge >= 0 ? '+' : '') + (metrics.avg_edge * 100).toFixed(1) + '%' : '-' }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Confidence Tier Breakdown -->
+          <div v-if="currentRun && currentRun.metrics?.confidence_tier_metrics" class="bt-panel">
+            <div class="bt-panel-head">
+              <div class="bt-panel-title">
+                <span class="bt-dot"></span>
+                Confidence Tiers
+              </div>
+            </div>
+            <div class="bt-tiers">
+              <div
+                v-for="tier in ['HIGH', 'MEDIUM', 'LOW']"
+                :key="tier"
+                class="bt-tier-row"
+                v-if="currentRun.metrics.confidence_tier_metrics[tier]"
+              >
+                <div class="tier-label" :class="'tier-' + tier.toLowerCase()">{{ tier }}</div>
+                <div class="tier-bar-wrap">
+                  <div
+                    class="tier-bar"
+                    :class="'tier-bar-' + tier.toLowerCase()"
+                    :style="{ width: ((currentRun.metrics.confidence_tier_metrics[tier].accuracy || 0) * 100) + '%' }"
+                  ></div>
+                </div>
+                <div class="tier-val">{{ formatPct(currentRun.metrics.confidence_tier_metrics[tier].accuracy) }}</div>
+                <div class="tier-n">n={{ currentRun.metrics.confidence_tier_metrics[tier].markets_tested }}</div>
+              </div>
+            </div>
+          </div>
+
           <!-- Market-by-Market Results Table -->
           <div v-if="currentRun && currentRun.results && currentRun.results.length > 0" class="bt-panel">
             <div class="bt-panel-head">
@@ -241,6 +310,9 @@
                   <tr>
                     <th class="sortable" @click="sortBy('market')">
                       Market <span class="sort-arrow">{{ sortArrow('market') }}</span>
+                    </th>
+                    <th class="sortable" @click="sortBy('category')">
+                      Category <span class="sort-arrow">{{ sortArrow('category') }}</span>
                     </th>
                     <th class="sortable" @click="sortBy('predicted')">
                       Predicted <span class="sort-arrow">{{ sortArrow('predicted') }}</span>
@@ -267,6 +339,7 @@
                     :style="{ animationDelay: (idx * 20) + 'ms' }"
                   >
                     <td class="col-market">{{ truncate(row.market || row.market_title || '-', 50) }}</td>
+                    <td><span v-if="row.category" class="category-badge">{{ row.category }}</span><span v-else>-</span></td>
                     <td class="col-num">{{ formatPct(row.predicted) }}</td>
                     <td class="col-num">{{ formatPct(row.actual) }}</td>
                     <td>
@@ -1026,6 +1099,64 @@ onUnmounted(() => { stopPolling() })
 }
 .pending-mark {
   color: #CCC;
+}
+
+/* ═══════ CATEGORY BADGE ═══════ */
+.category-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  background: #F5F5F5;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* ═══════ CONFIDENCE TIERS ═══════ */
+.bt-tiers { padding: 16px 20px; }
+.bt-tier-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.tier-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  width: 60px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.tier-label.tier-high { color: #10B981; }
+.tier-label.tier-medium { color: #F59E0B; }
+.tier-label.tier-low { color: #999; }
+.tier-bar-wrap {
+  flex: 1;
+  height: 16px;
+  background: #F5F5F5;
+  overflow: hidden;
+}
+.tier-bar {
+  height: 100%;
+  transition: width 0.5s ease;
+}
+.tier-bar-high { background: #10B981; }
+.tier-bar-medium { background: #F59E0B; }
+.tier-bar-low { background: #DDD; }
+.tier-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  font-weight: 600;
+  width: 50px;
+  text-align: right;
+}
+.tier-n {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  color: #BBB;
+  width: 40px;
 }
 
 /* ═══════ CALIBRATION PLACEHOLDER ═══════ */

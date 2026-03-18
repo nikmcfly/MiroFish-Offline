@@ -272,9 +272,17 @@
                   <span class="pred-dot"></span>
                   Trading Signal
                 </div>
-                <span class="signal-badge" :class="signalClass">
-                  {{ completedRun.signal.direction.replace('_', ' ') }}
-                </span>
+                <div class="signal-badges-row">
+                  <span v-if="completedRun.signal.category" class="category-badge-pred">
+                    {{ completedRun.signal.category }}
+                  </span>
+                  <span v-if="completedRun.signal.confidence_tier" class="tier-badge-pred" :class="'tier-' + completedRun.signal.confidence_tier.toLowerCase()">
+                    {{ completedRun.signal.confidence_tier }}
+                  </span>
+                  <span class="signal-badge" :class="signalClass">
+                    {{ completedRun.signal.direction.replace('_', ' ') }}
+                  </span>
+                </div>
               </div>
 
               <!-- Probability comparison gauge -->
@@ -995,6 +1003,33 @@ onUnmounted(() => { stopPolling() })
 .signal-badge.signal-buy-yes { background: #ECFDF5; color: #10B981; }
 .signal-badge.signal-buy-no { background: #FEF2F2; color: #dc2626; }
 .signal-badge.signal-hold { background: #F5F5F5; color: #999; }
+
+.signal-badges-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.category-badge-pred {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  background: #F5F5F5;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.tier-badge-pred {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.tier-badge-pred.tier-high { background: #ECFDF5; color: #10B981; }
+.tier-badge-pred.tier-medium { background: #FFFBEB; color: #F59E0B; }
+.tier-badge-pred.tier-low { background: #F5F5F5; color: #999; }
 
 /* Gauge */
 .signal-gauge { padding: 16px 20px; }
