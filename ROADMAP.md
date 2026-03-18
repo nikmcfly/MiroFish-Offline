@@ -1,8 +1,8 @@
 # MiroFish-Offline Roadmap
 
-## Current State (v0.2.0)
+## Current State (v0.2.0+)
 
-Fully local fork running on Neo4j CE + Ollama. All Zep Cloud dependencies removed. Core pipeline works: upload text → build knowledge graph → entity extraction → simulation → report generation.
+Fully local fork running on Neo4j CE + Ollama. All Zep Cloud dependencies removed. Core pipeline works: upload text → build knowledge graph → entity extraction → simulation → report generation. Prediction market signal engine with backtesting, paper trading, and SQLite storage. 62-test suite.
 
 ---
 
@@ -52,7 +52,7 @@ Fully local fork running on Neo4j CE + Ollama. All Zep Cloud dependencies remove
 - [ ] Authentication & multi-user support
 - [ ] Graph versioning: snapshot and restore graph states
 - [ ] Plugin system for custom NER extractors, search strategies, and report templates
-- [ ] Comprehensive test suite (unit + integration + E2E)
+- [x] Comprehensive test suite — 62 tests (unit + integration) for prediction/backtest system
 - [ ] Performance benchmarks: document throughput (texts/min) and latency per hardware tier
 - [ ] Helm chart for Kubernetes deployment
 

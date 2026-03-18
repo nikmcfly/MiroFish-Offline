@@ -36,6 +36,8 @@ The [original MiroFish](https://github.com/666ghj/MiroFish) was built for the Ch
 3. **Simulation** — Agents interact on simulated social platforms: posting, replying, arguing, shifting opinions. The system tracks sentiment evolution, topic propagation, and influence dynamics in real time.
 4. **Report** — A ReportAgent analyzes the post-simulation environment, interviews a focus group of agents, searches the knowledge graph for evidence, and generates a structured analysis.
 5. **Interaction** — Chat with any agent from the simulated world. Ask them why they posted what they posted. Full memory and personality persists.
+6. **Prediction Markets** — Browse live Polymarket markets, run a multi-agent debate simulation, and generate calibrated trading signals (BUY_YES / BUY_NO / HOLD) with edge and confidence scores.
+7. **Backtesting** — Validate signal quality against resolved markets. Computes accuracy, Brier score, ROI, Sharpe ratio, max drawdown, and calibration RMSE. Paper trading mode simulates execution with slippage.
 
 ## Screenshot
 
@@ -137,12 +139,15 @@ This fork introduces a clean abstraction layer between the application and the g
 ┌─────────────────────────────────────────┐
 │              Flask API                   │
 │  graph.py  simulation.py  report.py     │
+│  prediction.py  backtest.py             │
 └──────────────┬──────────────────────────┘
                │ app.extensions['neo4j_storage']
 ┌──────────────▼──────────────────────────┐
 │           Service Layer                  │
 │  EntityReader  GraphToolsService         │
 │  GraphMemoryUpdater  ReportAgent         │
+│  PredictionManager  Backtester           │
+│  Calibrator  PaperTrader                 │
 └──────────────┬──────────────────────────┘
                │ storage: GraphStorage
 ┌──────────────▼──────────────────────────┐
@@ -171,6 +176,8 @@ This fork introduces a clean abstraction layer between the application and the g
 - Hybrid search: 0.7 × vector similarity + 0.3 × BM25 keyword search
 - Synchronous NER/RE extraction via local LLM (replaces Zep's async episodes)
 - All original dataclasses and LLM tools (InsightForge, Panorama, Agent Interviews) preserved
+- Prediction pipeline: market → scenario → LLM debate → calibrated signal (60-90s per market)
+- SQLite (WAL mode) for backtest results, paper trading positions, calibration models
 
 ## Hardware Requirements
 
@@ -203,3 +210,5 @@ This is a modified fork of [MiroFish](https://github.com/666ghj/MiroFish) by [66
 - Entire frontend translated from Chinese to English (20 files, 1,000+ strings)
 - All Zep references replaced with Neo4j across the UI
 - Rebranded to MiroFish Offline
+- Prediction market signal engine (Polymarket integration, LLM debate simulation)
+- Backtesting + paper trading system with SQLite storage and 62-test suite

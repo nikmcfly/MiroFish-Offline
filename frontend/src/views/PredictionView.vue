@@ -751,7 +751,7 @@ onUnmounted(() => { stopPolling() })
 .pred-search {
   width: 100%; border: 1px solid #EAEAEA; padding: 7px 10px 7px 30px;
   font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;
-  outline: none; background: #FAFAFA; transition: border-color 0.2s;
+  outline: revert; background: #FAFAFA; transition: border-color 0.2s;
 }
 .pred-search:focus { border-color: #999; }
 .pred-select {
@@ -834,7 +834,6 @@ onUnmounted(() => { stopPolling() })
   height: 12px; background: linear-gradient(90deg, #F0F0F0 25%, #E5E5E5 50%, #F0F0F0 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
-  border-radius: 2px;
 }
 .skel-title { width: 80%; margin-bottom: 10px; }
 .skel-meta { width: 50%; height: 10px; }

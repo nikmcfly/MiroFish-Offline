@@ -39,6 +39,17 @@ Migration from Zep Cloud + DashScope (Alibaba Qwen API) to local Neo4j CE + Olla
 ## PHASE 7 — Publish (TODO)
 - **TASK-019**: Rename to MiroFish-Offline, add AGPL-3.0 license, publish to GitHub
 
+## PHASE 8 — Prediction Markets + Backtesting (COMPLETE)
+- **Prediction Engine**: Polymarket client, scenario generator, LLM debate simulator, calibrated signal generation
+- **Backtesting**: runs pipeline against resolved markets, computes accuracy/Brier/ROI/Sharpe/drawdown/calibration RMSE
+- **Paper Trading**: simulated order execution with 1-2% slippage, positions tracked in SQLite
+- **Calibration**: Platt scaling via LogisticRegression, HMAC-signed persistence
+- **SQLite Storage**: SQLAlchemy Core, WAL mode, FK enforcement, 4 tables (backtest_runs, backtest_results, paper_orders, paper_positions)
+- **API**: POST /api/backtest/run, GET /run/:id, GET /runs with DB-level concurrent guard
+- **Frontend**: BacktestView (metrics grid, sortable results table, live polling), PredictionView (market browser, signal display)
+- **Tests**: 62 tests covering all new code paths
+- **Cleanup**: deleted dead sentiment_analyzer.py, translated Chinese comments, extracted calibration config
+
 ## Files Created (New)
 | File | Replaces | Status |
 |------|----------|--------|
