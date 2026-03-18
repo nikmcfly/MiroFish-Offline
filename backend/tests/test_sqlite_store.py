@@ -196,6 +196,78 @@ class TestPaperPositions:
         assert p.status == "OPEN"
 
 
+class TestMarketCategories:
+
+    def test_save_and_get_market_category(self, sqlite_store):
+        sqlite_store.save_market_category("mkt_cat_001", "politics")
+        assert sqlite_store.get_market_category("mkt_cat_001") == "politics"
+
+    def test_get_nonexistent_returns_none(self, sqlite_store):
+        assert sqlite_store.get_market_category("nonexistent") is None
+
+    def test_upsert_overwrites(self, sqlite_store):
+        sqlite_store.save_market_category("mkt_cat_002", "sports")
+        sqlite_store.save_market_category("mkt_cat_002", "entertainment")
+        assert sqlite_store.get_market_category("mkt_cat_002") == "entertainment"
+
+
+class TestCalibrationProfiles:
+
+    def test_save_and_load_profiles(self, sqlite_store):
+        run = BacktestRun(id="bt_cp_test")
+        sqlite_store.save_backtest_run(run)
+
+        sqlite_store.save_calibration_profile("bt_cp_test", "politics", -0.05, 30)
+        sqlite_store.save_calibration_profile("bt_cp_test", "crypto", 0.12, 25)
+
+        profiles = sqlite_store.load_calibration_profiles("bt_cp_test")
+        assert len(profiles) == 2
+        assert profiles["politics"]["offset"] == -0.05
+        assert profiles["politics"]["sample_size"] == 30
+        assert profiles["crypto"]["offset"] == 0.12
+
+    def test_empty_profiles(self, sqlite_store):
+        profiles = sqlite_store.load_calibration_profiles("nonexistent")
+        assert profiles == {}
+
+
+class TestLatestCompletedRunId:
+
+    def test_returns_latest_completed(self, sqlite_store):
+        sqlite_store.save_backtest_run(BacktestRun(
+            id="bt_old", started_at="2025-01-01T00:00:00", status="COMPLETED"
+        ))
+        sqlite_store.save_backtest_run(BacktestRun(
+            id="bt_new", started_at="2025-06-01T00:00:00", status="COMPLETED"
+        ))
+        sqlite_store.save_backtest_run(BacktestRun(
+            id="bt_running", started_at="2025-07-01T00:00:00", status="RUNNING"
+        ))
+        assert sqlite_store.get_latest_completed_run_id() == "bt_new"
+
+    def test_returns_none_when_no_completed(self, sqlite_store):
+        sqlite_store.save_backtest_run(BacktestRun(id="bt_pending", status="PENDING"))
+        assert sqlite_store.get_latest_completed_run_id() is None
+
+
+class TestBacktestResultCategoryColumns:
+
+    def test_category_columns_persisted(self, sqlite_store):
+        run = BacktestRun(id="bt_cat_col")
+        sqlite_store.save_backtest_run(run)
+
+        result = BacktestResult(
+            id="btr_cat_001", run_id="bt_cat_col",
+            market_id="mkt_x", category="sports", confidence_tier="HIGH",
+        )
+        sqlite_store.save_backtest_result(result)
+
+        results = sqlite_store.get_results_by_run("bt_cat_col")
+        assert len(results) == 1
+        assert results[0].category == "sports"
+        assert results[0].confidence_tier == "HIGH"
+
+
 class TestWALMode:
 
     def test_wal_mode_enabled(self, sqlite_store):
