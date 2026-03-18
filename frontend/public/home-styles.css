@@ -80,7 +80,7 @@
 }
 
 .orange-tag {
-  background: #FF4500;
+  background: #5BA4F5;
   color: #FFFFFF;
   padding: 4px 10px;
   font-weight: 700;
@@ -104,7 +104,7 @@
 }
 
 .gradient-text {
-  background: linear-gradient(90deg, #000000 0%, #444444 100%);
+  background: linear-gradient(90deg, #1565C0 0%, #5BA4F5 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   display: inline-block;
@@ -130,7 +130,7 @@
 }
 
 .highlight-orange {
-  color: #FF4500;
+  color: #5BA4F5;
   font-weight: 700;
   font-family: 'JetBrains Mono', monospace;
 }
@@ -150,13 +150,13 @@
   font-weight: 520;
   color: #000000;
   letter-spacing: 1px;
-  border-left: 3px solid #FF4500;
+  border-left: 3px solid #5BA4F5;
   padding-left: 15px;
   margin-top: 20px;
 }
 
 .blinking-cursor {
-  color: #FF4500;
+  color: #5BA4F5;
   animation: blink 1s step-end infinite;
   font-weight: 700;
 }
@@ -169,7 +169,7 @@
 .decoration-square {
   width: 16px;
   height: 16px;
-  background: #FF4500;
+  background: #5BA4F5;
 }
 
 .hero-right {
@@ -201,13 +201,13 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #FF4500;
+  color: #5BA4F5;
   font-size: 1.2rem;
   transition: all 0.2s;
 }
 
 .scroll-down-btn:hover {
-  border-color: #FF4500;
+  border-color: #5BA4F5;
 }
 
 /* Dashboard Two-Column Layout */
@@ -241,7 +241,7 @@
 }
 
 .status-dot {
-  color: #FF4500;
+  color: #5BA4F5;
   font-size: 0.8rem;
 }
 
@@ -520,8 +520,8 @@
 }
 
 .start-engine-btn:hover:not(:disabled) {
-  background: #FF4500;
-  border-color: #FF4500;
+  background: #5BA4F5;
+  border-color: #5BA4F5;
   transform: translateY(-2px);
 }
 
@@ -539,9 +539,9 @@
 
 /* Pulse animation for border */
 @keyframes pulse-border {
-  0% { box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.2); }
-  70% { box-shadow: 0 0 0 6px rgba(0, 0, 0, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(0, 0, 0, 0); }
+  0% { box-shadow: 0 0 0 0 rgba(91, 164, 245, 0.4); }
+  70% { box-shadow: 0 0 0 6px rgba(91, 164, 245, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(91, 164, 245, 0); }
 }
 
 /* Responsive */
