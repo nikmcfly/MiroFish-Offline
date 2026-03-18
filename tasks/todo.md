@@ -1,3 +1,23 @@
+# Phase 2: Self-Improving Feedback Loop
+
+## Implementation Steps
+
+- [x] Step 1: Schema + model changes (sqlite_store.py, backtest.py)
+- [x] Step 2: MarketClassifier service (new file)
+- [x] Step 3: Wire classification into Backtester
+- [x] Step 4: Per-category and per-tier metrics
+- [x] Step 5: Category calibration offsets (calibrator.py)
+- [x] Step 6: Apply category offsets in live signals (prediction_manager.py)
+- [x] Step 7: Frontend — category breakdown + confidence tiers
+- [x] Step 8: Tests
+
+## Verification
+- [x] 90 tests pass (1.96s)
+- [x] Backend starts without import errors
+- [x] Frontend builds cleanly (vite build — 0 errors)
+
+---
+
 # Phase 1: Backtesting + Paper Trading + SQLite
 
 ## Implementation Steps

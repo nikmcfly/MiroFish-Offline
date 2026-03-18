@@ -32,6 +32,8 @@ Extracted from `PredictionView.vue`. All new views and components must follow th
 | `--orange`         | `#FF4500` | Accent, links, active states   |
 | `--green`          | `#10B981` | Success, BUY signal, positive  |
 | `--red`            | `#dc2626` | Error, SELL signal, negative   |
+| `--amber`          | `#F59E0B` | Warning, MEDIUM tier           |
+| `--amber-bg`       | `#FFFBEB` | Amber background fill          |
 | `--border`         | `#EAEAEA` | Panel borders, dividers        |
 | `--bg-subtle`      | `#FAFAFA` | Subtle background fills        |
 | `--text-secondary` | `#666`    | Secondary labels               |
