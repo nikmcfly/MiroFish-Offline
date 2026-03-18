@@ -11,10 +11,31 @@ from ..config import Config
 from ..models.prediction import PredictionMarket, PredictionRunManager, PredictionRunStatus
 from ..services.polymarket_client import PolymarketClient
 from ..services.prediction_manager import PredictionManager
+from ..storage.prediction_store import SQLitePredictionStore
 from ..models.task import TaskManager, TaskStatus
 from ..utils.logger import get_logger
 
 logger = get_logger('mirofish.api.prediction')
+
+
+def _get_pred_store():
+    """Get the prediction store — SQLite if available, JSON fallback."""
+    sqlite_store = current_app.extensions.get('sqlite')
+    if sqlite_store:
+        return SQLitePredictionStore(sqlite_store)
+    return PredictionRunManager
+
+
+def _find_run(run_id: str):
+    """Find a prediction run in SQLite first, then JSON fallback."""
+    store = _get_pred_store()
+    if isinstance(store, SQLitePredictionStore):
+        run = store.get_run(run_id)
+        if run:
+            return run
+        # Fall back to JSON for pre-migration runs
+        return PredictionRunManager.get_run(run_id)
+    return store.get_run(run_id)
 
 
 # ============== Market Browsing ==============
@@ -81,8 +102,16 @@ def start_prediction_run():
         if not market.title:
             return jsonify({"success": False, "error": "market must have a title"}), 400
 
-        # Create run
-        run = PredictionRunManager.create_run()
+        # Capture store in request context (before thread starts)
+        sqlite_store = current_app.extensions.get('sqlite')
+
+        # Create run — use SQLite store if available, fall back to JSON files
+        if sqlite_store:
+            pred_store = SQLitePredictionStore(sqlite_store)
+            run = pred_store.create_run()
+        else:
+            pred_store = PredictionRunManager
+            run = PredictionRunManager.create_run()
 
         # Create async task
         task_manager = TaskManager()
@@ -90,9 +119,6 @@ def start_prediction_run():
             task_type="prediction_run",
             metadata={"run_id": run.run_id, "market_title": market.title},
         )
-
-        # Capture store in request context (before thread starts)
-        sqlite_store = current_app.extensions.get('sqlite')
 
         def run_pipeline():
             try:
@@ -118,7 +144,7 @@ def start_prediction_run():
                         message=message,
                     )
 
-                manager = PredictionManager(sqlite_store=sqlite_store)
+                manager = PredictionManager(result_store=pred_store, sqlite_store=sqlite_store)
                 result = manager.run_prediction(
                     market=market,
                     run=run,
@@ -164,7 +190,7 @@ def start_prediction_run():
 def get_run_status(run_id: str):
     """Get prediction run status"""
     try:
-        run = PredictionRunManager.get_run(run_id)
+        run = _find_run(run_id)
         if not run:
             return jsonify({"success": False, "error": f"Run not found: {run_id}"}), 404
 
@@ -187,7 +213,7 @@ def get_run_status(run_id: str):
 def get_run(run_id: str):
     """Get full prediction run details"""
     try:
-        run = PredictionRunManager.get_run(run_id)
+        run = _find_run(run_id)
         if not run:
             return jsonify({"success": False, "error": f"Run not found: {run_id}"}), 404
 
@@ -206,7 +232,19 @@ def list_runs():
     """List all prediction runs"""
     try:
         limit = request.args.get('limit', 50, type=int)
-        runs = PredictionRunManager.list_runs(limit=limit)
+        store = _get_pred_store()
+        if isinstance(store, SQLitePredictionStore):
+            runs = store.list_runs(limit=limit)
+            # Also include any pre-migration JSON runs not yet in SQLite
+            json_runs = PredictionRunManager.list_runs(limit=limit)
+            sqlite_ids = {r.run_id for r in runs}
+            for jr in json_runs:
+                if jr.run_id not in sqlite_ids:
+                    runs.append(jr)
+            runs.sort(key=lambda r: r.created_at, reverse=True)
+            runs = runs[:limit]
+        else:
+            runs = store.list_runs(limit=limit)
 
         return jsonify({
             "success": True,
@@ -223,7 +261,11 @@ def list_runs():
 def delete_run(run_id: str):
     """Delete a prediction run"""
     try:
-        success = PredictionRunManager.delete_run(run_id)
+        store = _get_pred_store()
+        if isinstance(store, SQLitePredictionStore):
+            success = store.delete_run(run_id) or PredictionRunManager.delete_run(run_id)
+        else:
+            success = PredictionRunManager.delete_run(run_id)
         if not success:
             return jsonify({"success": False, "error": f"Run not found: {run_id}"}), 404
 
