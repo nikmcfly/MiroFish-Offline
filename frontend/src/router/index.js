@@ -6,6 +6,7 @@ import SimulationRunView from '../views/SimulationRunView.vue'
 import ReportView from '../views/ReportView.vue'
 import InteractionView from '../views/InteractionView.vue'
 import PredictionView from '../views/PredictionView.vue'
+import BacktestView from '../views/BacktestView.vue'
 
 const routes = [
   {
@@ -17,6 +18,11 @@ const routes = [
     path: '/prediction',
     name: 'Prediction',
     component: PredictionView
+  },
+  {
+    path: '/backtest',
+    name: 'Backtest',
+    component: BacktestView
   },
   {
     path: '/process/:projectId',

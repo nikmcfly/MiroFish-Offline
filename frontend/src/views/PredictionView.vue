@@ -10,6 +10,7 @@
           <span class="pred-nav-dot"></span>
           Prediction Market Engine
         </div>
+        <span class="paper-badge">PAPER</span>
       </div>
       <div class="pred-nav-right">
         <button class="pred-nav-back" @click="$router.push('/')">
@@ -641,6 +642,17 @@ onUnmounted(() => { stopPolling() })
 }
 .pred-nav-back:hover { border-color: #FF4500; color: #FF4500; }
 .back-arrow { font-size: 1rem; }
+.paper-badge {
+  background: var(--orange);
+  color: #000;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  letter-spacing: 0.1em;
+  font-family: var(--mono);
+  text-transform: uppercase;
+  margin-left: 12px;
+}
 
 /* ═══════ HERO STRIP ═══════ */
 .pred-hero {
