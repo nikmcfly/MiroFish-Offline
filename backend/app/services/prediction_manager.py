@@ -8,15 +8,18 @@ Pipeline completes in ~60-90 seconds per market.
 
 import requests
 import json
-from typing import Optional, Callable
+from typing import Dict, Any, Optional, Callable
 
 from ..config import Config
 from ..models.prediction import (
     PredictionMarket, PredictionRun, PredictionRunStatus,
     PredictionRunManager, TradingSignal, SentimentResult,
 )
+from ..services.calibrator import Calibrator
+from ..services.market_classifier import MarketClassifier, TIER_THRESHOLD_HIGH, TIER_THRESHOLD_MEDIUM
 from ..services.scenario_generator import ScenarioGenerator
 from ..services.debate_simulator import DebateSimulator
+from ..storage.sqlite_store import SQLiteStore
 from ..utils.llm_client import LLMClient
 from ..utils.logger import get_logger
 
@@ -26,11 +29,31 @@ logger = get_logger('mirofish.prediction_manager')
 class PredictionManager:
     """Orchestrates the prediction pipeline"""
 
-    def __init__(self, result_store=None):
+    def __init__(self, result_store=None, sqlite_store: Optional[SQLiteStore] = None):
         self.llm_client = LLMClient()
         self.scenario_gen = ScenarioGenerator(self.llm_client)
         self.debate_sim = DebateSimulator(self.llm_client)
         self.result_store = result_store or PredictionRunManager
+        self.sqlite_store = sqlite_store
+        self.classifier = MarketClassifier(sqlite_store, self.llm_client) if sqlite_store else None
+        self.category_profiles = self._load_category_profiles()
+
+    def _load_category_profiles(self):
+        """Load category calibration profiles from the latest completed backtest."""
+        if not self.sqlite_store:
+            return {}
+        try:
+            run_id = self.sqlite_store.get_latest_completed_run_id()
+            if not run_id:
+                return {}
+            calibrator = Calibrator(store=self.sqlite_store)
+            profiles = calibrator.load_profiles(run_id)
+            if profiles:
+                logger.info(f"Loaded {len(profiles)} category calibration profiles from run {run_id}")
+            return profiles
+        except Exception as e:
+            logger.warning(f"Could not load category profiles: {e}")
+            return {}
 
     def run_prediction(
         self,
@@ -64,9 +87,16 @@ class PredictionManager:
             run.sentiment = sentiment.to_dict()
             self.result_store.save_run(run)
 
+            # Step 2.5: Classify market category
+            category = None
+            if self.classifier:
+                category = self.classifier.classify(
+                    market.condition_id, market.title, market.description or ""
+                )
+
             # Step 3: Generate trading signal
             self._update(run, PredictionRunStatus.ANALYZING, "Computing trading signal...", progress_callback)
-            signal = self._generate_signal(market, sentiment)
+            signal = self._generate_signal(market, sentiment, category=category)
             run.signal = signal.to_dict()
 
             self._update(run, PredictionRunStatus.COMPLETED, "Prediction complete", progress_callback)
@@ -102,13 +132,16 @@ class PredictionManager:
             callback(status.value, message)
         logger.info(f"[{run.run_id}] {status.value}: {message}")
 
-    def _generate_signal(self, market: PredictionMarket, sentiment: SentimentResult) -> TradingSignal:
+    def _generate_signal(
+        self, market: PredictionMarket, sentiment: SentimentResult, category: Optional[str] = None
+    ) -> TradingSignal:
         """Compare simulated probability vs market price to generate trading signal.
 
-        Applies three calibration corrections learned from backtesting:
+        Applies calibration corrections learned from backtesting:
         1. Market regression: blend SimP toward market price (markets are informative)
         2. Confidence penalty for large edges (huge disagreements usually = model error)
         3. Short-dated market dampening (less time for unlikely events)
+        4. Category-specific offset (from per-category calibration profiles)
         """
         from datetime import datetime
 
@@ -140,6 +173,15 @@ class PredictionManager:
                     sim_prob = (1 - penalty) * sim_prob + penalty * market_prob
             except (ValueError, TypeError):
                 pass
+
+        # Calibration 4: Category-specific offset
+        category_offset_applied = False
+        if category and self.category_profiles:
+            profile = self.category_profiles.get(category)
+            if profile:
+                offset = profile["offset"]
+                sim_prob = max(0.01, min(0.99, sim_prob - offset))
+                category_offset_applied = True
 
         edge = sim_prob - market_prob
         threshold = Config.PREDICTION_SIGNAL_THRESHOLD
@@ -183,6 +225,11 @@ class PredictionManager:
             parts.append(f"Short-dated market ({days_to_end}d remaining) — extra dampening applied.")
         if abs_edge > Config.CALIBRATION_HIGH_EDGE_THRESHOLD:
             parts.append(f"Large edge penalized — confidence reduced (markets are usually right).")
+        if category_offset_applied and category:
+            offset = self.category_profiles[category]["offset"]
+            parts.append(f"Category '{category}' offset ({offset:+.3f}) applied.")
+
+        confidence_tier = "HIGH" if abs_edge >= TIER_THRESHOLD_HIGH else ("MEDIUM" if abs_edge >= TIER_THRESHOLD_MEDIUM else "LOW")
 
         return TradingSignal(
             direction=direction,
@@ -191,4 +238,6 @@ class PredictionManager:
             reasoning=" ".join(parts),
             simulated_probability=sim_prob,
             market_probability=market_prob,
+            category=category,
+            confidence_tier=confidence_tier,
         )

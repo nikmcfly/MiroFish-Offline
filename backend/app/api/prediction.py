@@ -4,7 +4,7 @@ Prediction Market API routes
 
 import traceback
 import threading
-from flask import request, jsonify
+from flask import request, jsonify, current_app
 
 from . import prediction_bp
 from ..config import Config
@@ -91,6 +91,9 @@ def start_prediction_run():
             metadata={"run_id": run.run_id, "market_title": market.title},
         )
 
+        # Capture store in request context (before thread starts)
+        sqlite_store = current_app.extensions.get('sqlite')
+
         def run_pipeline():
             try:
                 task_manager.update_task(
@@ -115,7 +118,7 @@ def start_prediction_run():
                         message=message,
                     )
 
-                manager = PredictionManager()
+                manager = PredictionManager(sqlite_store=sqlite_store)
                 result = manager.run_prediction(
                     market=market,
                     run=run,
