@@ -404,7 +404,7 @@ const totalMarketsTestedAll = computed(() => {
 
 const roiClass = computed(() => {
   if (!currentRun.value?.metrics?.roi) return ''
-  return currentRun.value.summary.roi >= 0 ? 'val-positive' : 'val-negative'
+  return currentRun.value.metrics.roi >= 0 ? 'val-positive' : 'val-negative'
 })
 
 const sortedResults = computed(() => {
