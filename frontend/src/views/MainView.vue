@@ -75,7 +75,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import GraphPanel from '../components/GraphPanel.vue'
 import Step1GraphBuild from '../components/Step1GraphBuild.vue'
@@ -89,8 +89,15 @@ const router = useRouter()
 // Layout State
 const viewMode = ref('split') // graph | split | workbench
 
-// Step State
+// Step State — persisted to localStorage per project
 const currentStep = ref(1) // 1: Graph Build, 2: Env Setup, 3: Simulation, 4: Report, 5: Interaction
+
+// Persist currentStep whenever it changes (only after project ID is known)
+watch(currentStep, (val) => {
+  if (currentProjectId.value && currentProjectId.value !== 'new') {
+    localStorage.setItem(`mirofish_step_${currentProjectId.value}`, String(val))
+  }
+})
 const stepNames = ['Graph Build', 'Env Setup', 'Simulation', 'Report', 'Interaction']
 
 // Data State
@@ -234,6 +241,12 @@ const loadProject = async () => {
     if (res.success) {
       projectData.value = res.data
       updatePhaseByStatus(res.data.status)
+      // Restore step from localStorage — takes precedence (user may be further along than status implies)
+      const savedStep = localStorage.getItem(`mirofish_step_${currentProjectId.value}`)
+      if (savedStep) {
+        const parsed = parseInt(savedStep)
+        if (!isNaN(parsed) && parsed >= 1 && parsed <= 5) currentStep.value = parsed
+      }
       addLog(`Project loaded. Status: ${res.data.status}`)
       
       if (res.data.status === 'ontology_generated' && !res.data.graph_id) {
@@ -263,7 +276,11 @@ const updatePhaseByStatus = (status) => {
     case 'created':
     case 'ontology_generated': currentPhase.value = 0; break;
     case 'graph_building': currentPhase.value = 1; break;
-    case 'graph_completed': currentPhase.value = 2; break;
+    case 'graph_completed':
+      currentPhase.value = 2
+      // Advance to Env Setup if we haven't already gone further
+      if (currentStep.value < 2) currentStep.value = 2
+      break;
     case 'failed': error.value = 'Project failed'; break;
   }
 }
