@@ -33,8 +33,10 @@ service.interceptors.response.use(
 
     return res
   },
-  error => {
+  async error => {
     console.error('Response error:', error)
+
+    const config = error.config
 
     // Handle timeout
     if (error.code === 'ECONNABORTED' && error.message.includes('timeout')) {
@@ -44,6 +46,25 @@ service.interceptors.response.use(
     // Handle network error
     if (error.message === 'Network Error') {
       console.error('Network error - please check your connection')
+    }
+
+    // Retry logic for transient failures (network errors, timeouts, 5xx server errors)
+    if (config) {
+      config.__retryCount = config.__retryCount || 0
+      const maxRetries = config.__maxRetries !== undefined ? config.__maxRetries : 3
+      const retryDelay = config.__retryDelay || 1000
+
+      const isTimeout = error.code === 'ECONNABORTED' && error.message.includes('timeout')
+      const isNetworkError = error.message === 'Network Error'
+      const isServerError = error.response && error.response.status >= 500
+
+      if ((isTimeout || isNetworkError || isServerError) && config.__retryCount < maxRetries) {
+        config.__retryCount += 1
+        const delay = retryDelay * Math.pow(2, config.__retryCount - 1)
+        console.warn(`Request failed, retrying (${config.__retryCount}/${maxRetries}) after ${delay}ms...`)
+        await new Promise(resolve => setTimeout(resolve, delay))
+        return service(config)
+      }
     }
 
     return Promise.reject(error)
