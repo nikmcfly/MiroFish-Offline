@@ -40,7 +40,7 @@ def main():
     host = os.environ.get('FLASK_HOST', '0.0.0.0')
     port = int(os.environ.get('FLASK_PORT', 5001))
     debug = Config.DEBUG
-
+    debug = True
     # Start service
     app.run(host=host, port=port, debug=debug, threaded=True)
 

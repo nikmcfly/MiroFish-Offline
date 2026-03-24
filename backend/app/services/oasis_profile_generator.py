@@ -14,6 +14,8 @@ import time
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, field
 from datetime import datetime
+import concurrent.futures
+import threading
 
 from openai import OpenAI
 
@@ -305,29 +307,35 @@ class OasisProfileGenerator:
         comprehensive_query = f"All information, activities, events, relationships and background about {entity_name}"
 
         try:
-            # Search edges (facts)
-            edge_results = self.storage.search(
-                graph_id=self.graph_id,
-                query=comprehensive_query,
-                limit=30,
-                scope="edges"
-            )
+            # Execute searches concurrently since both hit the database/embedding service
+            with concurrent.futures.ThreadPoolExecutor(max_workers=Config.PROFILE_SEARCH_WORKERS) as io_executor:
+                future_edges = io_executor.submit(
+                    self.storage.search,
+                    graph_id=self.graph_id,
+                    query=comprehensive_query,
+                    limit=30,
+                    scope="edges"
+                )
+                future_nodes = io_executor.submit(
+                    self.storage.search,
+                    graph_id=self.graph_id,
+                    query=comprehensive_query,
+                    limit=20,
+                    scope="nodes"
+                )
 
-            all_facts = set()
-            if isinstance(edge_results, dict) and 'edges' in edge_results:
-                for edge in edge_results['edges']:
-                    fact = edge.get('fact', '')
-                    if fact:
-                        all_facts.add(fact)
-            results["facts"] = list(all_facts)
+                # Collect edge results
+                edge_results = future_edges.result()
+                all_facts = set()
+                if isinstance(edge_results, dict) and 'edges' in edge_results:
+                    for edge in edge_results['edges']:
+                        fact = edge.get('fact', '')
+                        if fact:
+                            all_facts.add(fact)
+                results["facts"] = list(all_facts)
 
-            # Search nodes (entity summaries)
-            node_results = self.storage.search(
-                graph_id=self.graph_id,
-                query=comprehensive_query,
-                limit=20,
-                scope="nodes"
-            )
+                # Collect node results
+                node_results = future_nodes.result()
 
             all_summaries = set()
             if isinstance(node_results, dict) and 'nodes' in node_results:
@@ -478,8 +486,8 @@ class OasisProfileGenerator:
                         {"role": "user", "content": prompt}
                     ],
                     response_format={"type": "json_object"},
-                    temperature=0.7 - (attempt * 0.1)  # Lower temperature with each retry
-                    # Don't set max_tokens, let LLM generate freely
+                    temperature=0.7 - (attempt * 0.1),  # Lower temperature with each retry
+                    max_tokens=4000  # Enforce max_tokens to prevent vLLM infinite generation loops
                 )
 
                 content = response.choices[0].message.content
@@ -798,7 +806,7 @@ Important:
         use_llm: bool = True,
         progress_callback: Optional[callable] = None,
         graph_id: Optional[str] = None,
-        parallel_count: int = 5,
+        parallel_count: int = Config.PROFILE_PARALLEL_COUNT,
         realtime_output_path: Optional[str] = None,
         output_platform: str = "reddit"
     ) -> List[OasisAgentProfile]:
@@ -831,26 +839,25 @@ Important:
 
         # Helper function for real-time file writing
         def save_profiles_realtime():
-            """Real-time save generated profiles to file"""
+            """Real-time save generated profiles to file without blocking the main event loop"""
             if not realtime_output_path:
                 return
 
+            # Capture snapshot quickly
             with lock:
-                # Filter generated profiles
                 existing_profiles = [p for p in profiles if p is not None]
                 if not existing_profiles:
                     return
 
+            def _background_write(snapshot):
                 try:
                     if output_platform == "reddit":
-                        # Reddit JSON format
-                        profiles_data = [p.to_reddit_format() for p in existing_profiles]
+                        profiles_data = [p.to_reddit_format() for p in snapshot]
                         with open(realtime_output_path, 'w', encoding='utf-8') as f:
                             json.dump(profiles_data, f, ensure_ascii=False, indent=2)
                     else:
-                        # Twitter CSV format
                         import csv
-                        profiles_data = [p.to_twitter_format() for p in existing_profiles]
+                        profiles_data = [p.to_twitter_format() for p in snapshot]
                         if profiles_data:
                             fieldnames = list(profiles_data[0].keys())
                             with open(realtime_output_path, 'w', encoding='utf-8', newline='') as f:
@@ -859,6 +866,9 @@ Important:
                                 writer.writerows(profiles_data)
                 except Exception as e:
                     logger.warning(f"Real-time profile save failed: {e}")
+
+            # Offload heavy disk I/O out of the ThreadPool completion loop
+            threading.Thread(target=_background_write, args=(existing_profiles,), daemon=True).start()
         
         def generate_single_profile(idx: int, entity: EntityNode) -> tuple:
             """Worker function to generate single profile"""

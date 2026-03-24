@@ -69,6 +69,12 @@ class Config:
     REPORT_AGENT_MAX_REFLECTION_ROUNDS = int(os.environ.get('REPORT_AGENT_MAX_REFLECTION_ROUNDS', '2'))
     REPORT_AGENT_TEMPERATURE = float(os.environ.get('REPORT_AGENT_TEMPERATURE', '0.5'))
 
+    # Parallelization & Performance tuning
+    GRAPH_BUILD_BATCH_SIZE = int(os.environ.get('GRAPH_BUILD_BATCH_SIZE', '10'))
+    PROFILE_PARALLEL_COUNT = int(os.environ.get('PROFILE_PARALLEL_COUNT', '10'))
+    PROFILE_SEARCH_WORKERS = int(os.environ.get('PROFILE_SEARCH_WORKERS', '2'))
+    REPORT_PARALLEL_SECTIONS = int(os.environ.get('REPORT_PARALLEL_SECTIONS', '5'))
+
     @classmethod
     def validate(cls):
         """Validate required configuration"""

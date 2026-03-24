@@ -8,6 +8,7 @@ import logging
 import threading
 from typing import Dict, Any, List, Optional, Callable
 from dataclasses import dataclass
+import concurrent.futures
 
 from ..config import Config
 from ..models.task import TaskManager, TaskStatus
@@ -51,7 +52,7 @@ class GraphBuilderService:
         graph_name: str = "MiroFish Graph",
         chunk_size: int = 500,
         chunk_overlap: int = 50,
-        batch_size: int = 3
+        batch_size: int = Config.GRAPH_BUILD_BATCH_SIZE
     ) -> str:
         """
         Build graph asynchronously
@@ -186,7 +187,7 @@ class GraphBuilderService:
         self,
         graph_id: str,
         chunks: List[str],
-        batch_size: int = 3,
+        batch_size: int = Config.GRAPH_BUILD_BATCH_SIZE,
         progress_callback: Optional[Callable] = None
     ) -> List[str]:
         """Add text in batches to graph, return uuid list of all episodes"""
@@ -207,7 +208,7 @@ class GraphBuilderService:
                     progress
                 )
 
-            for j, chunk in enumerate(batch_chunks):
+            def process_single_chunk(j: int, chunk: str) -> str:
                 chunk_idx = i + j + 1
                 chunk_preview = chunk[:80].replace('\n', ' ')
                 logger.info(
@@ -217,20 +218,40 @@ class GraphBuilderService:
                 t0 = time.time()
                 try:
                     episode_id = self.storage.add_text(graph_id, chunk)
-                    episode_uuids.append(episode_id)
                     elapsed = time.time() - t0
                     logger.info(
                         f"[graph_build] Chunk {chunk_idx}/{total_chunks} done in {elapsed:.1f}s"
                     )
+                    return episode_id
                 except Exception as e:
                     elapsed = time.time() - t0
                     logger.error(
                         f"[graph_build] Chunk {chunk_idx}/{total_chunks} FAILED "
                         f"after {elapsed:.1f}s: {e}"
                     )
-                    if progress_callback:
-                        progress_callback(f"Batch {batch_num} processing failed: {str(e)}", 0)
-                    raise
+                    raise e
+
+            # Run chunks in the current batch concurrently
+            with concurrent.futures.ThreadPoolExecutor(max_workers=batch_size) as executor:
+                future_to_j = {
+                    executor.submit(process_single_chunk, j, chunk): j
+                    for j, chunk in enumerate(batch_chunks)
+                }
+                
+                batch_results = [None] * len(batch_chunks)
+                for future in concurrent.futures.as_completed(future_to_j):
+                    j = future_to_j[future]
+                    try:
+                        batch_results[j] = future.result()
+                    except Exception as e:
+                        if progress_callback:
+                            progress_callback(f"Batch {batch_num} processing failed: {str(e)}", 0)
+                        raise
+                
+                # Append successful episode_ids in order
+                for eid in batch_results:
+                    if eid:
+                        episode_uuids.append(eid)
 
         logger.info(f"[graph_build] All {total_chunks} chunks processed successfully")
         return episode_uuids

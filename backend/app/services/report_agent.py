@@ -17,6 +17,7 @@ from typing import Dict, Any, List, Optional, Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+import concurrent.futures
 
 from ..config import Config
 from ..utils.llm_client import LLMClient
@@ -1287,8 +1288,8 @@ class ReportAgent:
         
         # ReACT loop
         tool_calls_count = 0
-        max_iterations = 5  # Maximum iterations
-        min_tool_calls = 3  # Minimum tool calls
+        max_iterations = 3  # Maximum iterations (reduced from 5 for speed)
+        min_tool_calls = 0  # Minimum tool calls (reduced from 3 so the agent isn't forced to use tools unnecessarily)
         conflict_retries = 0  # Consecutive conflicts where tool calls and Final Answer appear simultaneously
         used_tools = set()  # Record tool names already called
         all_tools = {"insight_forge", "panorama_search", "quick_search", "interview_agents"}
@@ -1632,72 +1633,74 @@ class ReportAgent:
             
             logger.info(f"outlinesavedtofile: {report_id}/outline.json")
             
-            # Phase 2: Sequentially generate sectionsgeneration (per sectionsave）
+            # Phase 2: Concurrent section generation
             report.status = ReportStatus.GENERATING
             
             total_sections = len(outline.sections)
-            generated_sections = []  # savecontentfor context
+            generated_sections = []  # To mimic previous sections structure, although parallel will build out of order or individually.
             
-            for i, section in enumerate(outline.sections):
-                section_num = i + 1
-                base_progress = 20 + int((i / total_sections) * 70)
-                
-                # Update progress
-                ReportManager.update_progress(
-                    report_id, "generating", base_progress,
-                    f"generatinggenerateSection: {section.title} ({section_num}/{total_sections})",
-                    current_section=section.title,
-                    completed_sections=completed_section_titles
-                )
-                
-                if progress_callback:
-                    progress_callback(
-                        "generating", 
-                        base_progress, 
-                        f"generatinggenerateSection: {section.title} ({section_num}/{total_sections})"
+            # Using ThreadPoolExecutor for concurrent section generation
+            # Let's use max_workers reasonable parallel speed without overloading the LLM API limit.
+            with concurrent.futures.ThreadPoolExecutor(max_workers=Config.REPORT_PARALLEL_SECTIONS) as executor:
+                future_to_index = {}
+                for i, section in enumerate(outline.sections):
+                    section_num = i + 1
+                    base_progress = 20 + int((i / total_sections) * 70)
+                    
+                    # Update initial progress
+                    ReportManager.update_progress(
+                        report_id, "generating", base_progress,
+                        f"Queued Section: {section.title} ({section_num}/{total_sections})",
+                        current_section=section.title,
+                        completed_sections=completed_section_titles
                     )
-                
-                # Generate main sectioncontent
-                section_content = self._generate_section_react(
-                    section=section,
-                    outline=outline,
-                    previous_sections=generated_sections,
-                    progress_callback=lambda stage, prog, msg:
-                        progress_callback(
-                            stage, 
-                            base_progress + int(prog * 0.7 / total_sections),
-                            msg
-                        ) if progress_callback else None,
-                    section_index=section_num
-                )
-                
-                section.content = section_content
-                generated_sections.append(f"## {section.title}\n\n{section_content}")
-
-                # saveSection
-                ReportManager.save_section(report_id, section_num, section)
-                completed_section_titles.append(section.title)
-
-                # Log sectioncompletion log
-                full_section_content = f"## {section.title}\n\n{section_content}"
-
-                if self.report_logger:
-                    self.report_logger.log_section_full_complete(
-                        section_title=section.title,
-                        section_index=section_num,
-                        full_content=full_section_content.strip()
+                    
+                    # Submit task
+                    future = executor.submit(
+                        self._generate_section_react,
+                        section=section,
+                        outline=outline,
+                        previous_sections=[], # Empty because we are generating concurrently
+                        progress_callback=None, # Avoid callback conflict from multiple threads, or pass custom
+                        section_index=section_num
                     )
-
-                logger.info(f"Sectionsaved: {report_id}/section_{section_num:02d}.md")
+                    future_to_index[future] = (i, section, section_num, base_progress)
                 
-                # Update progress
-                ReportManager.update_progress(
-                    report_id, "generating", 
-                    base_progress + int(70 / total_sections),
-                    f"Section {section.title} completed",
-                    current_section=None,
-                    completed_sections=completed_section_titles
-                )
+                # As tasks finish
+                for future in concurrent.futures.as_completed(future_to_index):
+                    i, section, section_num, base_progress = future_to_index[future]
+                    try:
+                        section_content = future.result()
+                    except Exception as e:
+                        logger.error(f"Failed to generate section {section.title}: {e}")
+                        section_content = f"Error generating section: {str(e)}"
+
+                    section.content = section_content
+                    generated_sections.append(f"## {section.title}\n\n{section_content}")
+
+                    # save section
+                    ReportManager.save_section(report_id, section_num, section)
+                    completed_section_titles.append(section.title)
+
+                    # Log completion
+                    full_section_content = f"## {section.title}\n\n{section_content}"
+                    if self.report_logger:
+                        self.report_logger.log_section_full_complete(
+                            section_title=section.title,
+                            section_index=section_num,
+                            full_content=full_section_content.strip()
+                        )
+
+                    logger.info(f"Section saved: {report_id}/section_{section_num:02d}.md")
+                    
+                    # Update progress
+                    ReportManager.update_progress(
+                        report_id, "generating", 
+                        20 + int((len(completed_section_titles) / total_sections) * 70),
+                        f"Section {section.title} completed",
+                        current_section=None,
+                        completed_sections=completed_section_titles
+                    )
             
             # phase3: assembleComplete report
             if progress_callback:
