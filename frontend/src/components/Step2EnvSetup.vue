@@ -440,7 +440,7 @@
             <div class="rounds-header">
               <div class="header-left">
                 <span class="section-title">Simulation Rounds Setting</span>
-                <span class="section-desc">MiroFish Automatically plan and infer reality <span class="desc-highlight">{{ simulationConfig?.time_config?.total_simulation_hours || '-' }}</span> hours，Each round represents reality <span class="desc-highlight">{{ simulationConfig?.time_config?.minutes_per_round || '-' }}</span> minutes time elapsed</span>
+                <span class="section-desc">The Pin Factory automatically plans and infers reality <span class="desc-highlight">{{ simulationConfig?.time_config?.total_simulation_hours || '-' }}</span> hours，Each round represents reality <span class="desc-highlight">{{ simulationConfig?.time_config?.minutes_per_round || '-' }}</span> minutes time elapsed</span>
               </div>
               <label class="switch-control">
                 <input type="checkbox" v-model="useCustomRounds">

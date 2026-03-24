@@ -2,7 +2,7 @@
   <div class="home-container">
     <!-- Top Navigation Bar -->
     <nav class="navbar" :style="s.navbar">
-      <div class="nav-brand" :style="s.navBrand">MIROFISH OFFLINE</div>
+      <div class="nav-brand" :style="s.navBrand">THE PIN FACTORY</div>
       <div class="nav-links" :style="s.navLinks">
         <a href="https://github.com/nikmcfly/MiroFish-Offline" target="_blank" class="github-link" :style="s.githubLink">
           Visit our Github <span>↗</span>
@@ -26,7 +26,7 @@
 
           <div class="hero-desc" :style="s.heroDesc">
             <p :style="s.heroDescP">
-              From a single document, <span :style="s.highlightBold">MiroFish Offline</span> extracts reality seeds and builds a parallel world of <span :style="s.highlightOrange">autonomous AI agents</span> — running entirely on your machine. Inject variables, observe emergent behavior, and find <span :style="s.highlightCode">"local optima"</span> in complex social dynamics.
+              From a single document, <span :style="s.highlightBold">The Pin Factory</span> extracts reality seeds and builds a parallel world of <span :style="s.highlightOrange">autonomous AI agents</span> — running entirely on your machine. Inject variables, observe emergent behavior, and find <span :style="s.highlightCode">"local optima"</span> in complex social dynamics.
             </p>
             <p class="slogan-text" :style="s.sloganText">
               Your data never leaves your machine. The future is simulated locally<span :style="s.blinkingCursor">_</span>
@@ -38,7 +38,7 @@
 
         <div class="hero-right" :style="s.heroRight">
           <div class="logo-container" :style="s.logoContainer">
-            <img src="../assets/logo/MiroFish_logo_left.jpeg" alt="MiroFish Logo" :style="s.heroLogo" />
+            <img src="../assets/logo/MiroFish_logo_left.jpeg" alt="The Pin Factory Logo" :style="s.heroLogo" />
           </div>
           <button :style="s.scrollDownBtn" @click="scrollToBottom">↓</button>
         </div>
@@ -160,26 +160,26 @@ const s = reactive({
   heroSection: { display: 'flex', justifyContent: 'space-between', marginBottom: '80px', position: 'relative' },
   heroLeft: { flex: '1', paddingRight: '60px' },
   tagRow: { display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '25px', fontFamily: mono, fontSize: '0.8rem' },
-  orangeTag: { background: '#FF4500', color: '#fff', padding: '4px 10px', fontWeight: '700', letterSpacing: '1px', fontSize: '0.75rem' },
+  orangeTag: { background: '#5BA4F5', color: '#fff', padding: '4px 10px', fontWeight: '700', letterSpacing: '1px', fontSize: '0.75rem' },
   versionText: { color: '#999', fontWeight: '500', letterSpacing: '0.5px' },
   mainTitle: { fontSize: '4.5rem', lineHeight: '1.2', fontWeight: '500', margin: '0 0 40px 0', letterSpacing: '-2px', color: '#000' },
-  gradientText: { background: 'linear-gradient(90deg, #000 0%, #444 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', display: 'inline-block' },
+  gradientText: { background: 'linear-gradient(90deg, #1565C0 0%, #5BA4F5 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', display: 'inline-block' },
   heroDesc: { fontSize: '1.05rem', lineHeight: '1.8', color: '#666', maxWidth: '640px', marginBottom: '50px', fontWeight: '400', textAlign: 'justify' },
   heroDescP: { marginBottom: '1.5rem' },
   highlightBold: { color: '#000', fontWeight: '700' },
-  highlightOrange: { color: '#FF4500', fontWeight: '700', fontFamily: mono },
+  highlightOrange: { color: '#5BA4F5', fontWeight: '700', fontFamily: mono },
   highlightCode: { background: 'rgba(0,0,0,0.05)', padding: '2px 6px', borderRadius: '2px', fontFamily: mono, fontSize: '0.9em', color: '#000', fontWeight: '600' },
-  sloganText: { fontSize: '1.2rem', fontWeight: '520', color: '#000', letterSpacing: '1px', borderLeft: '3px solid #FF4500', paddingLeft: '15px', marginTop: '20px' },
-  blinkingCursor: { color: '#FF4500', fontWeight: '700' },
-  decorationSquare: { width: '16px', height: '16px', background: '#FF4500' },
+  sloganText: { fontSize: '1.2rem', fontWeight: '520', color: '#000', letterSpacing: '1px', borderLeft: '3px solid #5BA4F5', paddingLeft: '15px', marginTop: '20px' },
+  blinkingCursor: { color: '#5BA4F5', fontWeight: '700' },
+  decorationSquare: { width: '16px', height: '16px', background: '#5BA4F5' },
   heroRight: { flex: '0.8', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'flex-end' },
   logoContainer: { width: '100%', display: 'flex', justifyContent: 'flex-end', paddingRight: '40px' },
   heroLogo: { maxWidth: '500px', width: '100%' },
-  scrollDownBtn: { width: '40px', height: '40px', border: '1px solid #E5E5E5', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#FF4500', fontSize: '1.2rem' },
+  scrollDownBtn: { width: '40px', height: '40px', border: '1px solid #E5E5E5', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#5BA4F5', fontSize: '1.2rem' },
   dashboardSection: { display: 'flex', gap: '60px', borderTop: '1px solid #E5E5E5', paddingTop: '60px', alignItems: 'flex-start' },
   leftPanel: { flex: '0.8', display: 'flex', flexDirection: 'column' },
   panelHeader: { fontFamily: mono, fontSize: '0.8rem', color: '#999', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' },
-  statusDot: { color: '#FF4500', fontSize: '0.8rem' },
+  statusDot: { color: '#5BA4F5', fontSize: '0.8rem' },
   sectionTitle: { fontSize: '2rem', fontWeight: '520', margin: '0 0 15px 0' },
   sectionDesc: { color: '#666', marginBottom: '25px', lineHeight: '1.6' },
   metricsRow: { display: 'flex', gap: '20px', marginBottom: '15px' },
