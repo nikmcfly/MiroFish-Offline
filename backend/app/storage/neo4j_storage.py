@@ -9,6 +9,8 @@ import json
 import time
 import uuid
 import logging
+import concurrent.futures
+import threading
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional, Callable
 
@@ -353,26 +355,45 @@ class Neo4jStorage(GraphStorage):
         self,
         graph_id: str,
         chunks: List[str],
-        batch_size: int = 3,
+        batch_size: int = Config.GRAPH_BUILD_BATCH_SIZE,
         progress_callback: Optional[Callable] = None,
     ) -> List[str]:
-        """Batch-add text chunks with progress reporting."""
-        episode_ids = []
+        """Batch-add text chunks concurrently using a thread pool."""
         total = len(chunks)
+        episode_ids = [None] * total
+        lock = threading.Lock()
+        completed = [0]
 
-        for i, chunk in enumerate(chunks):
-            if not chunk or not chunk.strip():
-                continue
-            episode_id = self.add_text(graph_id, chunk)
-            episode_ids.append(episode_id)
+        def process_chunk(idx: int, text: str) -> Optional[str]:
+            if not text or not text.strip():
+                return None
+            try:
+                return self.add_text(graph_id, text)
+            except Exception as e:
+                logger.error(f"Failed to process chunk {idx}: {e}")
+                return None
 
-            if progress_callback:
-                progress = (i + 1) / total
-                progress_callback(progress)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, batch_size)) as executor:
+            future_to_idx = {
+                executor.submit(process_chunk, i, chunk): i 
+                for i, chunk in enumerate(chunks)
+            }
+            
+            for future in concurrent.futures.as_completed(future_to_idx):
+                i = future_to_idx[future]
+                ep_id = future.result()
+                episode_ids[i] = ep_id
 
-            logger.info(f"Processed chunk {i + 1}/{total}")
+                with lock:
+                    completed[0] += 1
+                    c = completed[0]
 
-        return episode_ids
+                if progress_callback:
+                    progress_callback(c / total)
+
+                logger.info(f"Processed chunk {c}/{total}")
+
+        return [eid for eid in episode_ids if eid]
 
     def wait_for_processing(
         self,

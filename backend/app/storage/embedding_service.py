@@ -31,7 +31,7 @@ class EmbeddingService:
         self.base_url = (base_url or Config.EMBEDDING_BASE_URL).rstrip('/')
         self.max_retries = max_retries
         self.timeout = timeout
-        self._embed_url = f"{self.base_url}/api/embed"
+        self._embed_url = f"{self.base_url}" ##/api/embed"
 
         # Simple in-memory cache (text -> embedding vector)
         # Using dict instead of lru_cache because lists aren't hashable
@@ -141,7 +141,7 @@ class EmbeddingService:
                 response.raise_for_status()
                 data = response.json()
 
-                embeddings = data.get("embeddings", [])
+                embeddings = data.get("embeddings", []) or [item.get("embedding", []) for item in data.get("data", [])]
                 if len(embeddings) != len(texts):
                     raise EmbeddingError(
                         f"Expected {len(texts)} embeddings, got {len(embeddings)}"
