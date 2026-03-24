@@ -585,7 +585,8 @@ Please output the report outline in JSON format as follows:
     ]
 }
 
-Note: sections array must have at least 2 and at most 5 elements!"""
+Note: sections array must have at least 2 and at most 5 elements!
+IMPORTANT: The entire report outline (title, summary, section titles and descriptions) MUST be in English. Never use Chinese or other languages."""
 
 PLAN_USER_PROMPT_TEMPLATE = """\
 [Prediction Scenario Settings]
@@ -651,12 +652,13 @@ Your task is to:
      > "Certain groups will state: original content..."
    - These quotes are core evidence of simulation predictions
 
-3. [Language Consistency - Quoted Content Must Be Translated to Report Language]
-   - Tool returned content may contain English or mixed Chinese-English expressions
-   - If the simulation requirement and source material are in Chinese, the report must be entirely in Chinese
-   - When you quote English or mixed Chinese-English content from tools, you must translate it to fluent Chinese before including it in the report
-   - When translating, preserve the original meaning and ensure natural expression
-   - This rule applies to both regular text and quoted blocks (> format)
+3. [Language Consistency - ALWAYS Write in English]
+   - The entire report MUST be written in English, regardless of source material language
+   - Tool-returned content may contain Chinese, mixed Chinese-English, or other languages
+   - When quoting tool-returned non-English content, ALWAYS translate it to fluent English before writing to report
+   - Keep original meaning unchanged during translation, ensure natural expression
+   - This rule applies to both body text and quoted content (> format)
+   - NEVER switch to Chinese or any other language mid-report
 
 4. [Faithfully Present Prediction Results]
    - Report content must reflect simulation results that represent the future in the simulated world
@@ -676,20 +678,20 @@ Your task is to:
 
 [Correct Example]
 ```
-This section analyzes the public sentiment propagation of the event. Through in-depth analysis of simulation data, we found...
+This section analyzes how the regulatory shift reshaped corporate strategy. Through in-depth analysis of simulation data, we found...
 
-**Initial Explosion Phase**
+**Initial Industry Response**
 
-Weibo, as the first scene of public sentiment, undertook the core function of initial information dissemination:
+Major tech companies moved quickly to reassess their compliance posture:
 
-> "Weibo contributed 68% of initial voice..."
+> "OpenAI and Anthropic scrambled to meet the new transparency requirements..."
 
-**Emotion Amplification Phase**
+**Emerging Strategic Divergence**
 
-The TikTok platform further amplified the impact of the event:
+A clear split emerged between companies embracing regulation and those resisting it:
 
-- Strong visual impact
-- High emotional resonance
+- Proactive compliance as competitive advantage
+- Lobbying efforts to soften enforcement
 ```
 
 [Incorrect Example]
@@ -851,7 +853,8 @@ Prediction Condition: {simulation_requirement}
 [Answer Style]
 - Concise and direct, don't write lengthy passages
 - Use > format to quote key content
-- Give conclusions first, then explain reasons"""
+- Give conclusions first, then explain reasons
+- ALWAYS respond in English, regardless of the language used in source material or report content"""
 
 CHAT_OBSERVATION_SUFFIX = "\n\nPlease answer the question concisely."
 
