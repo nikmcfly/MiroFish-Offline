@@ -1,7 +1,7 @@
 """
-LLM Client Wrapper
-Unified OpenAI format API calls
-Supports Ollama num_ctx parameter to prevent prompt truncation
+LLM client wrapper
+Supports OpenAI-compatible (Ollama / OpenAI) and Anthropic Claude.
+Auto-selects backend based on model name.
 """
 
 import json
@@ -14,7 +14,7 @@ from ..config import Config
 
 
 class LLMClient:
-    """LLM Client"""
+    """LLM client — supports OpenAI-compatible and Anthropic backends"""
 
     def __init__(
         self,
@@ -30,19 +30,40 @@ class LLMClient:
         if not self.api_key:
             raise ValueError("LLM_API_KEY not configured")
 
-        self.client = OpenAI(
-            api_key=self.api_key,
-            base_url=self.base_url,
-            timeout=timeout,
-        )
+        self._timeout = timeout
+        self._anthropic_client = None
+        self._openai_client = None
 
-        # Ollama context window size — prevents prompt truncation.
-        # Read from env OLLAMA_NUM_CTX, default 8192 (Ollama default is only 2048).
+        # Ollama context window size — prevents prompt truncation
         self._num_ctx = int(os.environ.get('OLLAMA_NUM_CTX', '8192'))
+
+    def _is_anthropic(self) -> bool:
+        """Check if we're using an Anthropic Claude model."""
+        return (self.model or '').startswith('claude')
 
     def _is_ollama(self) -> bool:
         """Check if we're talking to an Ollama server."""
         return '11434' in (self.base_url or '')
+
+    def _get_anthropic_client(self):
+        """Lazy-init Anthropic client."""
+        if self._anthropic_client is None:
+            import anthropic
+            self._anthropic_client = anthropic.Anthropic(
+                api_key=self.api_key,
+                timeout=self._timeout,
+            )
+        return self._anthropic_client
+
+    def _get_openai_client(self):
+        """Lazy-init OpenAI client."""
+        if self._openai_client is None:
+            self._openai_client = OpenAI(
+                api_key=self.api_key,
+                base_url=self.base_url,
+                timeout=self._timeout,
+            )
+        return self._openai_client
 
     def chat(
         self,
@@ -52,17 +73,75 @@ class LLMClient:
         response_format: Optional[Dict] = None
     ) -> str:
         """
-        Send chat request
+        Send a chat request.
 
         Args:
             messages: Message list
-            temperature: Temperature parameter
-            max_tokens: Max token count
-            response_format: Response format (e.g., JSON mode)
+            temperature: Sampling temperature
+            max_tokens: Maximum tokens in response
+            response_format: Response format (e.g. JSON mode)
 
         Returns:
             Model response text
         """
+        if self._is_anthropic():
+            return self._chat_anthropic(messages, temperature, max_tokens, response_format)
+        return self._chat_openai(messages, temperature, max_tokens, response_format)
+
+    def _chat_anthropic(
+        self,
+        messages: List[Dict[str, str]],
+        temperature: float,
+        max_tokens: int,
+        response_format: Optional[Dict] = None
+    ) -> str:
+        """Send chat request via Anthropic SDK."""
+        client = self._get_anthropic_client()
+
+        # Extract system message (Anthropic uses a separate system param)
+        system = None
+        user_messages = []
+        for msg in messages:
+            if msg["role"] == "system":
+                system = (system + "\n\n" + msg["content"]) if system else msg["content"]
+            else:
+                user_messages.append(msg)
+
+        # If response_format is JSON, add instruction to system prompt
+        if response_format and response_format.get("type") == "json_object":
+            json_instruction = "\n\nIMPORTANT: You must respond with valid JSON only. No markdown, no explanation, just the JSON object."
+            system = (system + json_instruction) if system else json_instruction
+
+        kwargs = {
+            "model": self.model,
+            "messages": user_messages,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+        }
+        if system:
+            kwargs["system"] = system
+
+        response = client.messages.create(**kwargs)
+
+        content = ""
+        for block in response.content:
+            if block.type == "text":
+                content += block.text
+
+        # Remove <think> tags from some models
+        content = re.sub(r'<think>[\s\S]*?</think>', '', content).strip()
+        return content
+
+    def _chat_openai(
+        self,
+        messages: List[Dict[str, str]],
+        temperature: float,
+        max_tokens: int,
+        response_format: Optional[Dict] = None
+    ) -> str:
+        """Send chat request via OpenAI SDK."""
+        client = self._get_openai_client()
+
         kwargs = {
             "model": self.model,
             "messages": messages,
@@ -79,9 +158,9 @@ class LLMClient:
                 "options": {"num_ctx": self._num_ctx}
             }
 
-        response = self.client.chat.completions.create(**kwargs)
+        response = client.chat.completions.create(**kwargs)
         content = response.choices[0].message.content
-        # Some models (like MiniMax M2.5) include <think>thinking content in response, need to remove
+        # Some models include <think> reasoning — remove it
         content = re.sub(r'<think>[\s\S]*?</think>', '', content).strip()
         return content
 
@@ -92,12 +171,12 @@ class LLMClient:
         max_tokens: int = 4096
     ) -> Dict[str, Any]:
         """
-        Send chat request and return JSON
+        Send a chat request and return parsed JSON.
 
         Args:
             messages: Message list
-            temperature: Temperature parameter
-            max_tokens: Max token count
+            temperature: Sampling temperature
+            max_tokens: Maximum tokens in response
 
         Returns:
             Parsed JSON object
@@ -117,4 +196,4 @@ class LLMClient:
         try:
             return json.loads(cleaned_response)
         except json.JSONDecodeError:
-            raise ValueError(f"Invalid JSON format from LLM: {cleaned_response}")
+            raise ValueError(f"LLM returned invalid JSON: {cleaned_response}")

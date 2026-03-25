@@ -1,12 +1,11 @@
 """
-MiroFish Backend - Flask Application Factory
+MiroFish Backend — Flask application factory
 """
 
 import os
 import warnings
 
-# Suppress multiprocessing resource_tracker warnings (from third-party libraries like transformers)
-# Must be set before all other imports
+# Suppress multiprocessing resource_tracker warnings from third-party libs
 warnings.filterwarnings("ignore", message=".*resource_tracker.*")
 
 from flask import Flask, request
@@ -17,19 +16,17 @@ from .utils.logger import setup_logger, get_logger
 
 
 def create_app(config_class=Config):
-    """Flask application factory function"""
+    """Flask application factory"""
     app = Flask(__name__)
     app.config.from_object(config_class)
 
-    # Configure JSON encoding: ensure Chinese displays directly (not as \uXXXX)
-    # Flask >= 2.3 uses app.json.ensure_ascii, older versions use JSON_AS_ASCII config
+    # JSON encoding: display CJK characters directly (not \uXXXX)
     if hasattr(app, 'json') and hasattr(app.json, 'ensure_ascii'):
         app.json.ensure_ascii = False
 
-    # Setup logging
     logger = setup_logger('mirofish')
 
-    # Only print startup info in reloader subprocess (avoid printing twice in debug mode)
+    # Only log startup info in the reloader child process (avoid duplicate logs in debug mode)
     is_reloader_process = os.environ.get('WERKZEUG_RUN_MAIN') == 'true'
     debug_mode = app.config.get('DEBUG', False)
     should_log_startup = not debug_mode or is_reloader_process
@@ -54,11 +51,22 @@ def create_app(config_class=Config):
         # Store None so endpoints can return 503 gracefully
         app.extensions['neo4j_storage'] = None
 
-    # Register simulation process cleanup function (ensure all simulation processes terminate on server shutdown)
+    # --- Initialize SQLite storage ---
+    from .storage.sqlite_store import SQLiteStore
+    try:
+        sqlite_store = SQLiteStore(Config.SQLITE_DB_PATH)
+        app.extensions['sqlite'] = sqlite_store
+        if should_log_startup:
+            logger.info("SQLiteStore initialized (%s)", Config.SQLITE_DB_PATH)
+    except Exception as e:
+        logger.error("SQLiteStore initialization failed: %s", e)
+        app.extensions['sqlite'] = None
+
+    # Register simulation process cleanup
     from .services.simulation_runner import SimulationRunner
     SimulationRunner.register_cleanup()
     if should_log_startup:
-        logger.info("Simulation process cleanup function registered")
+        logger.info("Simulation process cleanup registered")
 
     # Request logging middleware
     @app.before_request
@@ -66,7 +74,7 @@ def create_app(config_class=Config):
         logger = get_logger('mirofish.request')
         logger.debug(f"Request: {request.method} {request.path}")
         if request.content_type and 'json' in request.content_type:
-            logger.debug(f"Request body: {request.get_json(silent=True)}")
+            logger.debug(f"Body: {request.get_json(silent=True)}")
 
     @app.after_request
     def log_response(response):
@@ -75,10 +83,12 @@ def create_app(config_class=Config):
         return response
 
     # Register blueprints
-    from .api import graph_bp, simulation_bp, report_bp
+    from .api import graph_bp, simulation_bp, report_bp, prediction_bp, backtest_bp
     app.register_blueprint(graph_bp, url_prefix='/api/graph')
     app.register_blueprint(simulation_bp, url_prefix='/api/simulation')
     app.register_blueprint(report_bp, url_prefix='/api/report')
+    app.register_blueprint(prediction_bp, url_prefix='/api/prediction')
+    app.register_blueprint(backtest_bp, url_prefix='/api/backtest')
 
     # Health check
     @app.route('/health')
@@ -86,7 +96,6 @@ def create_app(config_class=Config):
         return {'status': 'ok', 'service': 'MiroFish-Offline Backend'}
 
     if should_log_startup:
-        logger.info("MiroFish-Offline Backend startup complete")
+        logger.info("MiroFish-Offline Backend started")
 
     return app
-

@@ -1,0 +1,342 @@
+[
+  {
+    "title": "Netanyahu out by June 30?",
+    "description": "This market will resolve to \"Yes\" if Benjamin Netanyahu announces that he will resign as Prime Minister of Israel, or otherwise steps down from/is removed from this position by June 30, 2026, 11:59 PM ET. Otherwise, this market will resolve to \"No\".\n\nNote that an announcement of Benjamin Netanyahu's resignation or removal before the resolution date will suffice to resolve this market to \"Yes\" regardless of if/when he actually steps down.\n\nThe primary resolution source for this market will be off",
+    "outcomes": [
+      "Yes",
+      "No"
+    ],
+    "prices": [
+      0.175,
+      0.825
+    ],
+    "volume": 972531.1859559967,
+    "condition_id": "0x865303ccb9a48341d1bae33b3b4379ca86d5abbff3ce1e132716631cc0af3cce",
+    "end_date": "2026-12-31T00:00:00Z",
+    "slug": "netanyahu-out-by-june-30-383-244",
+    "liquidity": 176519.4861
+  },
+  {
+    "title": "Will Anthropic have the best AI model at the end of March 2026?",
+    "description": "This market will resolve according to the company which owns the model which has the highest arena score based off the Chatbot Arena LLM Leaderboard (https://lmarena.ai/) when the table under the \"Leaderboard\" tab is checked on March 31, 2026, 12:00 PM ET.\n\nResults from the \"Arena Score\" section on the Leaderboard tab of https://lmarena.ai/leaderboard/text with the style control off will be used to resolve this market.\n\nIf two models are tied for the highest arena score at this market's check ti",
+    "outcomes": [
+      "Yes",
+      "No"
+    ],
+    "prices": [
+      0.9125,
+      0.08750000000000002
+    ],
+    "volume": 964491.3931150021,
+    "condition_id": "0x5cd80b8fd72f37c78260a4f8fa0d5bbaaad3adffcfc2c0705e05ee20b8672908",
+    "end_date": "2026-03-31T00:00:00Z",
+    "slug": "will-anthropic-have-the-best-ai-model-at-the-end-of-march-2026-437",
+    "liquidity": 16675.01815
+  },
+  {
+    "title": "Will Claude 5 be released by March 31, 2026?",
+    "description": "This market will resolve to \"Yes\" if Anthropic's Claude 5 model is made available to the general public by March 31, 2026, 11:59 PM ET. Otherwise, this market will resolve to \"No.\"\n\nFor this market to resolve to \"Yes,\" Claude 5 must be launched and publicly accessible, including via open beta or open rolling waitlist signups. A closed beta or any form of private access will not suffice. The release must be clearly defined and publicly announced by Anthropic as being accessible to the general pub",
+    "outcomes": [
+      "Yes",
+      "No"
+    ],
+    "prices": [
+      0.0605,
+      0.9395
+    ],
+    "volume": 940999.981428004,
+    "condition_id": "0x2821de9fbe90c422cb220dad69fe44dfdea8fdf8fb779e562b44be6db8c1daff",
+    "end_date": "",
+    "slug": "will-claude-5-be-released-by-march-31-2026-243-489-141-184",
+    "liquidity": 62038.90751
+  },
+  {
+    "title": "Will France win Eurovision 2026?",
+    "description": "This market will resolve to the country whose candidate for Eurovision 2026 wins.\n\nIf at any point it is impossible for the listed candidate to win Eurovision 2026 based on the rules of the competition (i.e. they are eliminated), this market may immediately resolve to \"No\".\n\nIf no winner is announced by July 31, 2026, 11:59 PM ET, this market will resolve \"Other\". All ties will be broken according to EBU's official Eurovision rules.\n\nThe primary resolution source for this market will be official",
+    "outcomes": [
+      "Yes",
+      "No"
+    ],
+    "prices": [
+      0.123,
+      0.877
+    ],
+    "volume": 938284.5119680042,
+    "condition_id": "0xac5a968ce63080fd83fcb9a8eb73512f0ad4f0c689a86740b37969f5fb62bb78",
+    "end_date": "2026-05-16T00:00:00Z",
+    "slug": "will-france-win-eurovision-2026",
+    "liquidity": 154561.51427
+  },
+  {
+    "title": "Will Abelardo de la Espriella win the 1st round of the 2026 Colombian presidential election?",
+    "description": "Colombia's presidential elections are scheduled for May 31, 2026, and a second round (if required) on June 21, 2026, in case no candidate secures more than 50% of the valid votes in the first round.\n\nThis market will resolve according to the candidate who receives the greatest number of valid votes in the first round of voting.\n\nIf the results of the first round of the Colombian presidential election are not known by December 31, 2026, 11:59 PM ET, this market will resolve to \"Other\".\n\nThis mark",
+    "outcomes": [
+      "Yes",
+      "No"
+    ],
+    "prices": [
+      0.0455,
+      0.9545
+    ],
+    "volume": 99738.279572,
+    "condition_id": "0xb611b3a7173f69e412b55561ed265d849e36693c248ff620d0e981c5b3f2e325",
+    "end_date": "2026-05-31T16:00:00Z",
+    "slug": "will-abelardo-de-la-espriella-win-the-1st-round-of-the-2026-colombian-presidential-election",
+    "liquidity": 12520.3566
+  },
+  {
+    "title": "Masoud Pezeshkian out by December 31?",
+    "description": "This market will resolve to \"Yes\" if the President of Iran, Masoud Pezeshkian, is removed from power for any length of time between this market's creation and December 31, 2026, 11:59 PM ET. Otherwise, this market will resolve to \"No\".\n\nPresident Masoud Pezeshkian will be considered removed from power if he announces his resignation from his role as President, or is otherwise dismissed, detained, disqualified, or otherwise loses his position or is prevented from fulfilling his duties as Presiden",
+    "outcomes": [
+      "Yes",
+      "No"
+    ],
+    "prices": [
+      0.42,
+      0.5800000000000001
+    ],
+    "volume": 99664.64759299997,
+    "condition_id": "0x3e80f6cc475d7940ce26db5ee997b28ee80c50170ce7aa8af2d104c947c8e5e3",
+    "end_date": "2026-12-31T00:00:00Z",
+    "slug": "masoud-pezeshkian-out-by-december-31",
+    "liquidity": 13188.9324
+  },
+  {
+    "title": "Deel IPO before 2027?",
+    "description": "This market will resolve to \"Yes\" if the listed company completes an Initial Public Offering (IPO) by December 31, 2026, 11:59 PM ET, as confirmed by official company announcements or credible news sources. The IPO refers to the first sale of stock by the listed company to the public on any recognized stock exchange.\n\nIf the listed company merges with another entity, is acquired, or ceases to exist before the market resolves, the market will also resolve to \"No\".\n\nThis market will resolve early ",
+    "outcomes": [
+      "Yes",
+      "No"
+    ],
+    "prices": [
+      0.16,
+      0.84
+    ],
+    "volume": 99420.54613799985,
+    "condition_id": "0xd21614c016c4a911cbc8856dac53f5af6fdf222b9c82531e31aa9f9f9bf4f2a9",
+    "end_date": "2026-12-31T00:00:00Z",
+    "slug": "deel-ipo-before-2027",
+    "liquidity": 3403.3882
+  },
+  {
+    "title": "Will the Oklahoma City Thunder finish with the best record in the NBA?",
+    "description": "This market will resolve according to the team that finishes the 2025-2026 NBA Regular Season with the best record in the league.\n\nThis market will resolve to \u201cNo\u201d if it becomes impossible for this team to finish the regular Season with the best record.\n\nIf multiple teams are tied for most wins in the 2025-26 NBA Regular Season, this market will resolve in favor of the team who receives home court advantage for the 2026 NBA playoffs. A list of the NBA\u2019s Tiebreak Procedures can be found here: htt",
+    "outcomes": [
+      "Yes",
+      "No"
+    ],
+    "prices": [
+      0.8985,
+      0.10150000000000003
+    ],
+    "volume": 99034.79241899996,
+    "condition_id": "0x02e9bd7d63034d022150692e78d860da3347498c58a196709941e602025b4029",
+    "end_date": "",
+    "slug": "will-the-oklahoma-city-thunder-finish-with-the-best-record-in-the-nba",
+    "liquidity": 4891.66155
+  },
+  {
+    "title": "Will Russia enter Druzkhivka by June 30?",
+    "description": "This market will resolve to \u201cYes\u201d if, according to the ISW map, Russia captures any territory of Druzkhivka (https://maps.app.goo.gl/cH9ekgbf9qbxGPUk6) by June 30, 2026, at 11:59 PM ET.\n\nTerritory will be considered captured if any part of the city or settlement is shaded under a below specified layer on the ISW map (https://storymaps.arcgis.com/stories/36a7f6a6f5a9448496de641cf64bd375) by the resolution date. Otherwise, the market will resolve to \u201cNo\u201d.\n\nFor any change on the ISW map to qualify ",
+    "outcomes": [
+      "Yes",
+      "No"
+    ],
+    "prices": [
+      0.25,
+      0.75
+    ],
+    "volume": 98392.07862999999,
+    "condition_id": "0xcbd66faaf74bf50d61ab2f63f9351f8086305dcbf16c1e3eab0ebfe576fce1c6",
+    "end_date": "2026-06-30T00:00:00Z",
+    "slug": "will-russia-enter-druzkhivka-by-june-30-933-897",
+    "liquidity": 14687.8963
+  },
+  {
+    "title": "Will James Talarico win the Texas Democratic Senate Primary by between 6.00% and 6.50%?",
+    "description": "Primary elections in Texas took place on March 3, 2026.\n\nThis market will resolve according to the margin of victory between the top two candidates in the first round of the Texas Democratic Senate Primary.\n\nFor the purpose of this market, the \u201cmargin of victory\u201d is defined as the absolute difference between the percentages of valid votes received by the first- and second-place candidates. Percentages of the valid votes received by each candidate will be determined by dividing the total number o",
+    "outcomes": [
+      "Yes",
+      "No"
+    ],
+    "prices": [
+      0.925,
+      0.07499999999999996
+    ],
+    "volume": 98001.02909399998,
+    "condition_id": "0xd20b0d0467c4e4577e82ddb9f1364f8044cff2568b801806f98570d5c18f0b24",
+    "end_date": "2026-11-30T00:00:00Z",
+    "slug": "will-james-talarico-win-the-texas-democratic-senate-primary-by-between-6pt00-and-6pt50",
+    "liquidity": 12742.6242
+  },
+  {
+    "title": "OpenAI receives federal backstop for infrastructure before July?",
+    "description": "OpenAI Chief Financial Officer Sarah Friar recently suggested that OpenAI would be supportive of a government backstop for its investments in AI infrastructure including chips and data centers. Friar and Open AI Chief Executive Officer Sam Altman later backtracked on that statement. You can read more about that here: https://www.cnn.com/2025/11/06/tech/openai-backtracks-government-support-chip-investments.\n\nThis market will resolve to \u201cYes\u201d if OpenAI or any financial lender or intermediary invol",
+    "outcomes": [
+      "Yes",
+      "No"
+    ],
+    "prices": [
+      0.064,
+      0.9359999999999999
+    ],
+    "volume": 97791.5701939998,
+    "condition_id": "0x388459f1cfd0d310154e13f16f49d31fd301e5e3502072c8b09d3a0697b2823f",
+    "end_date": "2026-06-30T00:00:00Z",
+    "slug": "openai-receives-federal-backstop-for-infrastructure-before-july",
+    "liquidity": 7740.87875
+  },
+  {
+    "title": "Vanta IPO before 2027?",
+    "description": "This market will resolve to \"Yes\" if the listed company completes an Initial Public Offering (IPO) by December 31, 2026, 11:59 PM ET, as confirmed by official company announcements or credible news sources. The IPO refers to the first sale of stock by the listed company to the public on any recognized stock exchange.\n\nIf the listed company merges with another entity, is acquired, or ceases to exist before the market resolves, the market will also resolve to \"No\".\n\nThis market will resolve early ",
+    "outcomes": [
+      "Yes",
+      "No"
+    ],
+    "prices": [
+      0.125,
+      0.875
+    ],
+    "volume": 97756.63954999995,
+    "condition_id": "0xa11a18282162d613febe1860f9545fadd826ea6425ae9858ce03cc38c97cb8c6",
+    "end_date": "2026-12-31T00:00:00Z",
+    "slug": "vanta-ipo-before-2027",
+    "liquidity": 5860.2039
+  },
+  {
+    "title": "Tim Walz charged by December 31, 2026?",
+    "description": "This market will resolve to \u201cYes\u201d if any Federal or State jurisdiction of the United States formally charges or otherwise announces a criminal indictment of Governor Tim Walz by December 31, 2026, 11:59 PM ET. Otherwise, this market will resolve to \u201cNo\u201d.\n\nFor the purposes of this market the District of Columbia and any county, municipality, or other subdivision of a State shall be included within the definition of a State.\n\nThe primary resolution source for this market will be official informati",
+    "outcomes": [
+      "Yes",
+      "No"
+    ],
+    "prices": [
+      0.185,
+      0.815
+    ],
+    "volume": 97650.44812600002,
+    "condition_id": "0x6d6ff1de6a7f9fa0d51fe433b791c8979a70787827fe9894e743728b02f4594f",
+    "end_date": "2026-03-31T00:00:00Z",
+    "slug": "tim-walz-charged-by-december-31-2026",
+    "liquidity": 11992.6875
+  },
+  {
+    "title": "Maduro guilty of all counts?",
+    "description": "This market will resolve to \"Yes\" if Nicol\u00e1s Maduro is found guilty of all counts in the indictment 'UNITED STATES OF AMERICA V. NICOLAS MADURO MOROS[...]' (S4 11 Cr. 205 (AKH)) by December 31, 2027, 11:59 PM ET. Otherwise, this market will resolve to \"No\".\n\nThis market will resolve based on the initial verdict rendered by the court regarding Maduro\u2019s indictment as of market creation (https://www.justice.gov/opa/media/1422326/dl).\n\nIf Nicol\u00e1s Maduro is not found guilty of all counts in the refer",
+    "outcomes": [
+      "Yes",
+      "No"
+    ],
+    "prices": [
+      0.32,
+      0.6799999999999999
+    ],
+    "volume": 97551.11300200078,
+    "condition_id": "0x1f9767f0b627eee12dd816c07a745c968807dae4cce336b8a2cb66d28cd3607c",
+    "end_date": "2027-12-31T00:00:00Z",
+    "slug": "maduro-guilty-of-all-counts",
+    "liquidity": 11835.807
+  },
+  {
+    "title": "Hamad bin Isa Al Khalifa out as leader of Bahrain?",
+    "description": "This market will resolve to \"Yes\" if the King of Bahrain, Hamad bin Isa Al Khalifa, ceases to be the de facto leader of Bahrain at any point between market creation and June 30, 2026, 11:59 PM ET. Otherwise, this market will resolve to \"No\".\n\nHamad bin Isa Al Khalifa will be considered to no longer be the de facto leader of Bahrain if he is removed from power, is detained, or otherwise loses his position or is prevented from acting as the de facto leader of Bahrain within this market's timeframe",
+    "outcomes": [
+      "Yes",
+      "No"
+    ],
+    "prices": [
+      0.08,
+      0.92
+    ],
+    "volume": 96909.57779599993,
+    "condition_id": "0x08b346f4580cbd59cc79416ab4fa00642b3737a04e822d85ef344dd7b0c4ee0a",
+    "end_date": "2026-06-30T00:00:00Z",
+    "slug": "hamad-bin-isa-al-khalifa-out-as-bahrain-king",
+    "liquidity": 15150.5246
+  },
+  {
+    "title": "Will Israel strike 6 countries in 2026?",
+    "description": "This market will resolve according to the total number of different countries' soil that Israel initiates a drone, missile, or air strike between January 1, 2026, 12:00 AM ET and December 31, 2026, 11:59 PM ET.\n\nStrikes on embassies or consulates will count towards the country the embassy or consulate is located in, not towards the country they represent.\n\nStrikes within the territory controlled by Israel as of December 31, 2025, 11:59 PM ET, as well as strikes within the West Bank or the Gaza S",
+    "outcomes": [
+      "Yes",
+      "No"
+    ],
+    "prices": [
+      0.0435,
+      0.9565
+    ],
+    "volume": 96577.66883200001,
+    "condition_id": "0x85d949e1aa73caddf263dc356e6f93125f9889dc3af14b243b3428823e2e0a81",
+    "end_date": "2026-12-31T00:00:00Z",
+    "slug": "will-israel-strike-6-countries-in-2026",
+    "liquidity": 13166.01516
+  },
+  {
+    "title": "Israel and Saudi Arabia normalize relations before 2027?",
+    "description": "This market will resolve to \"Yes\" if both Israel and the Kingdom of Saudi Arabia officially announce the establishment of diplomatic relations by December 31, 2026, 11:59 PM ET. Otherwise, this market will resolve to \"No\".\n\nThe primary resolution source for this market will be official information from Israel and the Kingdom of Saudi Arabia, however a consensus of credible reporting may also be used.\n",
+    "outcomes": [
+      "Yes",
+      "No"
+    ],
+    "prices": [
+      0.185,
+      0.815
+    ],
+    "volume": 96449.22912399996,
+    "condition_id": "0x95783b62c693ea42d8613482a625828fc14a288e8e8440b974c54d42f4ffd04b",
+    "end_date": "2026-12-31T00:00:00Z",
+    "slug": "israel-and-saudi-arabia-normalize-relations-before-2027",
+    "liquidity": 11694.0588
+  },
+  {
+    "title": "Cap on gambling loss deductions repealed by March 31?",
+    "description": "This market will resolve to \"Yes\" if the 90% cap on gambling loss deductions enacted in the 2025 \"Big Beautiful Bill\" is fully repealed by March 31, 2026, 11:59 PM ET. Otherwise, this market will resolve to \"No\".\n\nTo qualify as a repeal, the cap must be entirely remove any cap limiting gambling loss deductions to below 100%.\n\nModifications\u2014such as increasing the limit, delaying implementation or changing how it is calculated will not qualify.\n\nThe resolution source for this market will be a cons",
+    "outcomes": [
+      "Yes",
+      "No"
+    ],
+    "prices": [
+      0.032,
+      0.968
+    ],
+    "volume": 96247.2927750001,
+    "condition_id": "0x5a8c5193008f76941e75598a31ef2915125ef0a8a7cfcb7369e8c451511c4452",
+    "end_date": "2026-03-31T00:00:00Z",
+    "slug": "cap-on-gambling-loss-deductions-repealed-by-march-31",
+    "liquidity": 9753.37198
+  },
+  {
+    "title": "Spread: Grizzlies (-2.5)",
+    "description": "In the upcoming NBA game, scheduled for January 25 at 3:30 PM ET:\n\nThis market will resolve to \"Grizzlies\" if the Grizzlies win the game by 3 or more points.\n\nOtherwise, this market will resolve to \"Nuggets\". If the game ends in a tie, this market will resolve to \"Nuggets\".\n\nIf the game is postponed, this market will remain open until the game has been completed. If the game is canceled entirely, with no make-up game, this market will resolve 50-50.",
+    "outcomes": [
+      "Yes",
+      "No"
+    ],
+    "prices": [
+      0.0725,
+      0.9275
+    ],
+    "volume": 95912.90020399996,
+    "condition_id": "0xb84796d75a7783952399abb7a2b0c500a69b671bf113dee4626508230b812d6c",
+    "end_date": "2026-03-18T00:00:00Z",
+    "slug": "nba-den-mem-2026-01-25-spread-home-2pt5",
+    "liquidity": 2028.40208
+  },
+  {
+    "title": "Spread: Grizzlies (-3.5)",
+    "description": "In the upcoming NBA game, scheduled for January 25 at 3:30 PM ET:\n\nThis market will resolve to \"Grizzlies\" if the Grizzlies win the game by 4 or more points.\n\nOtherwise, this market will resolve to \"Nuggets\". If the game ends in a tie, this market will resolve to \"Nuggets\".\n\nIf the game is postponed, this market will remain open until the game has been completed. If the game is canceled entirely, with no make-up game, this market will resolve 50-50.",
+    "outcomes": [
+      "Yes",
+      "No"
+    ],
+    "prices": [
+      0.0345,
+      0.9655
+    ],
+    "volume": 95663.25006600007,
+    "condition_id": "0x61576c035392a49c3ee6fd1f4807f166f6496d2faa45f805683120462c883501",
+    "end_date": "2026-03-18T00:00:00Z",
+    "slug": "nba-den-mem-2026-01-25-spread-home-3pt5",
+    "liquidity": 8253.71302
+  }
+]

@@ -1,0 +1,123 @@
+[
+  {
+    "title": "Will Claude 5 be released by March 31, 2026?",
+    "market_p": 0.0605,
+    "sim_p": 0.2005,
+    "direction": "BUY_YES",
+    "edge": 0.14,
+    "confidence": 0.6842,
+    "for": 6,
+    "against": 13,
+    "neutral": 1
+  },
+  {
+    "title": "Will France win Eurovision 2026?",
+    "market_p": 0.123,
+    "sim_p": 0.1298,
+    "direction": "HOLD",
+    "edge": 0.0068,
+    "confidence": 0.7222,
+    "for": 5,
+    "against": 13,
+    "neutral": 2
+  },
+  {
+    "title": "Will Abelardo de la Espriella win the 1st round of the 2026 ",
+    "market_p": 0.0455,
+    "sim_p": 0.0478,
+    "direction": "HOLD",
+    "edge": 0.0023,
+    "confidence": 0.85,
+    "for": 3,
+    "against": 17,
+    "neutral": 0
+  },
+  {
+    "title": "Deel IPO before 2027?",
+    "market_p": 0.16,
+    "sim_p": 0.2132,
+    "direction": "HOLD",
+    "edge": 0.0532,
+    "confidence": 0.75,
+    "for": 5,
+    "against": 15,
+    "neutral": 0
+  },
+  {
+    "title": "Will Russia enter Druzkhivka by June 30?",
+    "market_p": 0.25,
+    "sim_p": 0.1112,
+    "direction": "BUY_NO",
+    "edge": -0.1388,
+    "confidence": 0.85,
+    "for": 3,
+    "against": 17,
+    "neutral": 0
+  },
+  {
+    "title": "OpenAI receives federal backstop for infrastructure before J",
+    "market_p": 0.064,
+    "sim_p": 0.0881,
+    "direction": "HOLD",
+    "edge": 0.0241,
+    "confidence": 0.85,
+    "for": 3,
+    "against": 17,
+    "neutral": 0
+  },
+  {
+    "title": "Vanta IPO before 2027?",
+    "market_p": 0.125,
+    "sim_p": 0.1451,
+    "direction": "HOLD",
+    "edge": 0.0201,
+    "confidence": 0.7778,
+    "for": 4,
+    "against": 14,
+    "neutral": 2
+  },
+  {
+    "title": "Tim Walz charged by December 31, 2026?",
+    "market_p": 0.185,
+    "sim_p": 0.1365,
+    "direction": "HOLD",
+    "edge": -0.0485,
+    "confidence": 0.7778,
+    "for": 4,
+    "against": 14,
+    "neutral": 2
+  },
+  {
+    "title": "Hamad bin Isa Al Khalifa out as leader of Bahrain?",
+    "market_p": 0.08,
+    "sim_p": 0.1468,
+    "direction": "HOLD",
+    "edge": 0.0668,
+    "confidence": 0.7059,
+    "for": 5,
+    "against": 12,
+    "neutral": 3
+  },
+  {
+    "title": "Will Israel strike 6 countries in 2026?",
+    "market_p": 0.0435,
+    "sim_p": 0.0616,
+    "direction": "HOLD",
+    "edge": 0.0181,
+    "confidence": 0.85,
+    "for": 3,
+    "against": 17,
+    "neutral": 0
+  },
+  {
+    "title": "Cap on gambling loss deductions repealed by March 31?",
+    "market_p": 0.032,
+    "sim_p": 0.1373,
+    "direction": "BUY_YES",
+    "edge": 0.1053,
+    "confidence": 0.65,
+    "for": 7,
+    "against": 13,
+    "neutral": 0
+  }
+]
