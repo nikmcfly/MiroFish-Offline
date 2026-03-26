@@ -24,8 +24,8 @@ from .entity_reader import EntityNode
 
 logger = get_logger('mirofish.simulation_config')
 
-# Time zone configuration for Chinese work schedules (Beijing Time)
-CHINA_TIMEZONE_CONFIG = {
+# Default social activity rhythm configuration
+DEFAULT_ACTIVITY_RHYTHM_CONFIG = {
     # Dead hours (almost no activity)
     "dead_hours": [0, 1, 2, 3, 4, 5],
     # Morning hours (gradually waking up)
@@ -81,7 +81,7 @@ class AgentActivityConfig:
 
 @dataclass
 class TimeSimulationConfig:
-    """Time simulation configuration (based on Chinese work schedule habits)"""
+    """Time simulation configuration based on a generic social activity rhythm"""
     # Total simulation time (simulation hours)
     total_simulation_hours: int = 72  # Default 72 hours (3 days)
 
@@ -92,7 +92,7 @@ class TimeSimulationConfig:
     agents_per_hour_min: int = 5
     agents_per_hour_max: int = 20
 
-    # Peak hours (evening 19-22, most active time for Chinese people)
+    # Peak hours (evening 19-22 by default)
     peak_hours: List[int] = field(default_factory=lambda: [19, 20, 21, 22])
     peak_activity_multiplier: float = 1.5
 
@@ -546,17 +546,18 @@ class SimulationConfigGenerator:
 ## Task
 Please generate time configuration JSON.
 
-### Basic principles (for reference only, adjust flexibly based on event nature and participant characteristics):
-- User base is Chinese people, must follow Beijing Time work schedule habits
-- 0-5am almost no activity (activity coefficient 0.05)
-- 6-8am gradually active (activity coefficient 0.4)
-- 9-18 work time moderately active (activity coefficient 0.7)
-- 19-22 evening is peak period (activity coefficient 1.5)
-- After 23 activity decreases (activity coefficient 0.5)
-- General rule: low activity early morning, gradually increasing morning, moderate work time, evening peak
-- **Important**: Example values below are for reference only, adjust specific time periods based on event nature and participant characteristics
-  - Example: student peak may be 21-23; media active all day; official institutions only during work hours
-  - Example: breaking news may cause late night discussions, off_peak_hours can be shortened appropriately
+### Basic principles (for reference only, adjust flexibly based on the event nature, participant characteristics, and implied locale in the source material):
+- Do not assume any specific country, timezone, or culture unless the simulation requirement or source material clearly indicates one
+- Use a realistic daily rhythm for the population being simulated
+- 0-5am is often low activity (activity coefficient around 0.05), but adjust if the scenario suggests otherwise
+- 6-8am is often a ramp-up period (activity coefficient around 0.4)
+- 9-18 is often moderately active for workday-oriented populations (activity coefficient around 0.7)
+- 19-22 is often an evening peak period (activity coefficient around 1.5)
+- After 23 activity often decreases (activity coefficient around 0.5)
+- General rule: low activity early morning, gradually increasing in the morning, moderate daytime activity, evening peak
+- **Important**: Example values below are only defaults. Adjust specific time periods based on the event nature, participant characteristics, geography, and platform behavior implied by the inputs
+  - Example: students may peak later in the evening; media may stay active most of the day; official institutions may be concentrated in work hours
+  - Example: breaking news may cause late-night discussion, so off_peak_hours can be shortened appropriately
 
 ### Return JSON format (no markdown)
 
@@ -584,7 +585,7 @@ Field description:
 - work_hours (int array): Work hours
 - reasoning (string): Brief explanation for this configuration"""
 
-        system_prompt = "You are a social media simulation expert. Return pure JSON format, time configuration must follow Chinese work schedule habits."
+        system_prompt = "You are a social media simulation expert. Return pure JSON format. Infer a realistic activity rhythm from the provided context, and do not assume any specific country or timezone unless the input clearly implies one."
 
         try:
             return self._call_llm_with_retry(prompt, system_prompt)
@@ -593,7 +594,7 @@ Field description:
             return self._get_default_time_config(num_entities)
     
     def _get_default_time_config(self, num_entities: int) -> Dict[str, Any]:
-        """Get default time configuration (Chinese work schedule)"""
+        """Get the default time configuration"""
         return {
             "total_simulation_hours": 72,
             "minutes_per_round": 60,  # 1 hour per round, speed up time
@@ -603,7 +604,7 @@ Field description:
             "off_peak_hours": [0, 1, 2, 3, 4, 5],
             "morning_hours": [6, 7, 8],
             "work_hours": [9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
-            "reasoning": "Using default Chinese work schedule configuration (1 hour per round)"
+            "reasoning": "Using the default general-purpose social activity rhythm configuration (1 hour per round)"
         }
 
     def _parse_time_config(self, result: Dict[str, Any], num_entities: int) -> TimeSimulationConfig:
@@ -838,7 +839,7 @@ Simulation Requirements: {simulation_requirement}
 
 ## Task
 Generate activity configuration for each entity, noting:
-- **Time follows Chinese work schedule**: Almost no activity 0-5am, most active 19-22
+- **Time should follow the likely audience rhythm implied by the inputs**: use the provided context to estimate low-activity and peak-activity hours instead of assuming a specific country
 - **Official institutions** (University/GovernmentAgency): Low activity (0.1-0.3), active during work hours (9-17), slow response (60-240 min), high influence (2.5-3.0)
 - **Media** (MediaOutlet): Medium activity (0.4-0.6), active all day (8-23), fast response (5-30 min), high influence (2.0-2.5)
 - **Individuals** (Student/Person/Alumni): High activity (0.6-0.9), mainly evening activity (18-23), fast response (1-15 min), low influence (0.8-1.2)
@@ -852,7 +853,7 @@ Return JSON format (no markdown):
             "activity_level": <0.0-1.0>,
             "posts_per_hour": <posting frequency>,
             "comments_per_hour": <comment frequency>,
-            "active_hours": [<active hours list, consider Chinese work schedule>],
+            "active_hours": [<active hours list, inferred from role, event type, and likely audience rhythm>],
             "response_delay_min": <minimum response delay minutes>,
             "response_delay_max": <maximum response delay minutes>,
             "sentiment_bias": <-1.0 to 1.0>,
@@ -863,7 +864,7 @@ Return JSON format (no markdown):
     ]
 }}"""
 
-        system_prompt = "You are a social media behavior analysis expert. Return pure JSON, configuration must follow Chinese work schedule habits."
+        system_prompt = "You are a social media behavior analysis expert. Return pure JSON. Infer activity schedules from the entities, event type, and provided context, and do not assume any specific country or timezone unless the input clearly implies one."
 
         try:
             result = self._call_llm_with_retry(prompt, system_prompt)
@@ -902,7 +903,7 @@ Return JSON format (no markdown):
         return configs
     
     def _generate_agent_config_by_rule(self, entity: EntityNode) -> Dict[str, Any]:
-        """Generate single agent configuration based on rules (Chinese work schedule)"""
+        """Generate a single agent configuration based on generic role-driven activity rules"""
         entity_type = (entity.get_entity_type() or "Unknown").lower()
 
         if entity_type in ["university", "governmentagency", "ngo"]:
@@ -984,4 +985,3 @@ Return JSON format (no markdown):
                 "influence_weight": 1.0
             }
     
-

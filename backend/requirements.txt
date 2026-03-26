@@ -5,12 +5,12 @@
 # Install: pip install -r requirements.txt
 # ===========================================
 
-# ============= 核心框架 =============
+# ============= Core Framework =============
 flask>=3.0.0
 flask-cors>=6.0.0
 
-# ============= LLM 相关 =============
-# OpenAI SDK（统一使用 OpenAI 格式调用 LLM / Ollama）
+# ============= LLM Integrations =============
+# OpenAI SDK (used with the unified OpenAI-style interface for LLM / Ollama)
 openai>=1.0.0
 # HTTP client for Ollama embedding API
 requests>=2.28.0
@@ -18,20 +18,20 @@ requests>=2.28.0
 # ============= Neo4j Graph Database =============
 neo4j>=5.15.0
 
-# ============= OASIS 社交媒体模拟 =============
-# OASIS 社交模拟框架
+# ============= OASIS Social Media Simulation =============
+# OASIS social simulation framework
 camel-oasis==0.2.5
 camel-ai==0.2.78
 
-# ============= 文件处理 =============
+# ============= File Processing =============
 PyMuPDF>=1.24.0
-# 编码检测（支持非UTF-8编码的文本文件）
+# Encoding detection (supports non-UTF-8 text files)
 charset-normalizer>=3.0.0
 chardet>=5.0.0
 
-# ============= 工具库 =============
-# 环境变量加载
+# ============= Utility Libraries =============
+# Environment variable loading
 python-dotenv>=1.0.0
 
-# 数据验证
+# Data validation
 pydantic>=2.0.0

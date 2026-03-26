@@ -651,11 +651,11 @@ Your task is to:
      > "Certain groups will state: original content..."
    - These quotes are core evidence of simulation predictions
 
-3. [Language Consistency - Quoted Content Must Be Translated to Report Language]
-   - Tool returned content may contain English or mixed Chinese-English expressions
-   - If the simulation requirement and source material are in Chinese, the report must be entirely in Chinese
-   - When you quote English or mixed Chinese-English content from tools, you must translate it to fluent Chinese before including it in the report
-   - When translating, preserve the original meaning and ensure natural expression
+3. [Language Consistency - Match the User's Input Language]
+   - Tool returned content may contain language inconsistencies or mixed-language expressions
+   - Write the report in the primary language used by the simulation requirement and source material
+   - When quoting tool output that is in a different language, translate it into the report language before including it
+   - Preserve the original meaning when translating and keep the phrasing natural
    - This rule applies to both regular text and quoted blocks (> format)
 
 4. [Faithfully Present Prediction Results]
@@ -1456,7 +1456,7 @@ class ReportAgent:
                 unused_tools = all_tools - used_tools
                 unused_hint = ""
                 if unused_tools and tool_calls_count < self.MAX_TOOL_CALLS_PER_SECTION:
-                    unused_hint = REACT_UNUSED_TOOLS_HINT.format(unused_list="、".join(unused_tools))
+                    unused_hint = REACT_UNUSED_TOOLS_HINT.format(unused_list=", ".join(unused_tools))
 
                 messages.append({"role": "assistant", "content": response})
                 messages.append({
@@ -1961,13 +1961,14 @@ class ReportManager:
     @classmethod
     def get_console_log(cls, report_id: str, from_line: int = 0) -> Dict[str, Any]:
         """
-        Getconsolelogcontent
-        
-        This isReportgenerateduring processconsoleoutputlog（INFO、WARNINGetc），
-        and agent_log.jsonl structured logsdifferent。
+        Get console log content.
+
+        This contains console output produced during report generation
+        (INFO, WARNING, etc.) and differs from the structured logs in
+        `agent_log.jsonl`.
         
         Args:
-            report_id: ReportID
+            report_id: Report ID
             from_line: from which rowrowStartRead（for incrementalGet，0 means from the beginningStart）
             
         Returns:

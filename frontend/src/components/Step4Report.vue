@@ -1286,8 +1286,8 @@ const InterviewDisplay = {
     // Clean quote text - remove leading list numbers to avoid double numbering
     const cleanQuoteText = (text) => {
       if (!text) return ''
-      // Remove leading patterns like "1. ", "2. ", "1、", "（1）", "(1)" etc.
-      return text.replace(/^\s*\d+[\.\、\)）]\s*/, '').trim()
+      // Remove leading patterns like "1. ", "2. ", "1,", "(1)", or full-width numbered variants.
+      return text.replace(/^\s*\d+[\.\u3001\)\uFF09]\s*/, '').trim()
     }
     
     const activeIndex = ref(0)
