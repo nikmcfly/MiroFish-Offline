@@ -15,6 +15,7 @@ from ..services.graph_builder import GraphBuilderService
 from ..services.text_processor import TextProcessor
 from ..utils.file_parser import FileParser
 from ..utils.logger import get_logger
+from ..utils.llm_client import LLMClient
 from ..models.task import TaskManager, TaskStatus
 from ..models.project import ProjectManager, ProjectStatus
 
@@ -590,6 +591,79 @@ def delete_graph(graph_id: str):
         })
 
     except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }), 500
+
+
+# ============== Simple Mode: Auto-generate Seed + Prompt ==============
+
+@graph_bp.route('/simple-generate', methods=['POST'])
+def simple_generate():
+    """
+    Given a plain-language description, use the LLM to produce:
+      - seed_content: a structured context document (the "reality seed" .txt)
+      - prompt:       a structured simulation prompt ready for MiroFish
+    Body JSON: { "description": "...user's plain-language goal..." }
+    """
+    try:
+        import datetime
+        body = request.get_json(force=True, silent=True) or {}
+        description = (body.get('description') or '').strip()
+        if not description:
+            return jsonify({"success": False, "error": "Missing 'description' in request body"}), 400
+
+        llm = LLMClient()
+
+        system_prompt = """You are an expert simulation designer for MiroFish, an offline multi-agent prediction engine.
+Given a plain-language goal from a user, produce TWO outputs as a JSON object with exactly two keys:
+
+1. "seed_content": A structured context document (plain text) that serves as the "reality seed" for the simulation.
+   Include:
+   - Date header
+   - Relevant factual context organized under clear headings
+   - Key factors (market, geopolitical, social, etc.)
+   - A concise "Goal:" section at the end
+
+2. "prompt": A concise, structured simulation prompt for an AI agent.
+   Include:
+   - Role assignment ("Act as ...")
+   - The date
+   - Reference to the provided context
+   - "Consider:" bullet points
+   - "Output:" numbered deliverables
+   - Instruction to be decisive and specific
+
+Return ONLY valid JSON with keys "seed_content" and "prompt". No markdown, no extra explanation."""
+
+        today = datetime.date.today().strftime('%B %d, %Y')
+        user_message = f"Today's date: {today}\n\nUser goal: {description}"
+
+        result = llm.chat_json(
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user",   "content": user_message}
+            ],
+            temperature=0.5,
+            max_tokens=4096
+        )
+
+        seed_content = result.get('seed_content', '')
+        prompt_text  = result.get('prompt', '')
+
+        if not seed_content or not prompt_text:
+            return jsonify({"success": False, "error": "LLM returned incomplete output", "raw": result}), 500
+
+        return jsonify({
+            "success": True,
+            "seed_content": seed_content,
+            "prompt": prompt_text
+        })
+
+    except Exception as e:
+        logger.error(f"simple_generate error: {e}")
         return jsonify({
             "success": False,
             "error": str(e),

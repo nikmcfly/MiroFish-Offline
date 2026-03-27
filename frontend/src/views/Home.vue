@@ -86,54 +86,131 @@
 
         <!-- Right Column: Interactive Console -->
         <div class="right-panel" :style="s.rightPanel">
+
+          <!-- Simple / Advanced Toggle -->
+          <div :style="s.modeToggleRow">
+            <button :style="simpleMode ? s.modeTabActive : s.modeTab" @click="switchMode(true)">Simple</button>
+            <button :style="!simpleMode ? s.modeTabActive : s.modeTab" @click="switchMode(false)">Advanced</button>
+            <span :style="s.modeHint">{{ simpleMode ? 'Describe your goal — we generate the seed &amp; prompt for you' : 'Upload your own seed document and write a custom prompt' }}</span>
+          </div>
+
           <div class="console-box" :style="s.consoleBox">
-            <div :style="s.consoleSection">
-              <div class="console-header" :style="s.consoleHeader">
-                <span>01 / Reality Seeds</span>
-                <span>Supported: PDF, MD, TXT</span>
-              </div>
-              <div
-                :style="s.uploadZone"
-                @dragover.prevent="handleDragOver"
-                @dragleave.prevent="handleDragLeave"
-                @drop.prevent="handleDrop"
-                @click="triggerFileInput"
-              >
-                <input ref="fileInput" type="file" multiple accept=".pdf,.md,.txt" @change="handleFileSelect" style="display: none" :disabled="loading" />
-                <div v-if="files.length === 0" :style="s.uploadPlaceholder">
-                  <div :style="s.uploadIcon">↑</div>
-                  <div :style="s.uploadTitle">Drag & drop files here</div>
-                  <div :style="s.uploadHint">or click to browse</div>
+
+            <!-- ───────── SIMPLE MODE ───────── -->
+            <template v-if="simpleMode">
+              <div :style="s.consoleSection">
+                <div class="console-header" :style="s.consoleHeader">
+                  <span>>_ Simple Goal</span>
+                  <span>AI will generate seed + prompt</span>
                 </div>
-                <div v-else :style="s.fileList">
-                  <div v-for="(file, index) in files" :key="index" :style="s.fileItem">
-                    <span>📄</span>
-                    <span :style="s.fileName">{{ file.name }}</span>
-                    <button @click.stop="removeFile(index)" :style="s.removeBtn">×</button>
+                <div :style="s.inputWrapper">
+                  <textarea
+                    v-model="simpleDescription"
+                    :style="s.codeInput"
+                    placeholder="// Describe what you want to predict in plain language.&#10;// Example: I want to predict oil prices over the next 7 days and get a buy/sell recommendation for Canadian oil stocks on Questrade."
+                    rows="6"
+                    :disabled="isGenerating || loading"
+                  ></textarea>
+                </div>
+              </div>
+
+              <!-- Error -->
+              <div v-if="generateError" :style="s.errorBox">{{ generateError }}</div>
+
+              <!-- Generate button -->
+              <div v-if="!generatedSeed" :style="s.btnSection">
+                <button :style="s.generateBtn" @click="generateSimple" :disabled="!simpleDescription.trim() || isGenerating">
+                  <span v-if="!isGenerating">Generate Seed &amp; Prompt</span>
+                  <span v-else>Generating...</span>
+                  <span>⟳</span>
+                </button>
+              </div>
+
+              <!-- Generated results (editable) -->
+              <template v-if="generatedSeed">
+                <div :style="s.consoleDivider"><span :style="s.consoleDividerText">Generated Context (Seed)</span></div>
+                <div :style="s.consoleSection">
+                  <div class="console-header" :style="s.consoleHeader">
+                    <span>01 / Reality Seed</span>
+                    <span style="color:#FF4500;cursor:pointer;" @click="resetSimple">✕ Reset</span>
+                  </div>
+                  <div :style="s.inputWrapper">
+                    <textarea v-model="generatedSeed" :style="{ ...s.codeInput, minHeight: '180px' }" rows="8" :disabled="loading"></textarea>
+                  </div>
+                </div>
+
+                <div :style="s.consoleDivider"><span :style="s.consoleDividerText">Generated Prompt</span></div>
+                <div :style="s.consoleSection">
+                  <div class="console-header" :style="s.consoleHeader">
+                    <span>>_ 02 / Simulation Prompt</span>
+                  </div>
+                  <div :style="s.inputWrapper">
+                    <textarea v-model="generatedPrompt" :style="{ ...s.codeInput, minHeight: '180px' }" rows="8" :disabled="loading"></textarea>
+                    <div :style="s.modelBadge">Engine: Ollama + Neo4j (local)</div>
+                  </div>
+                </div>
+
+                <div :style="s.btnSection">
+                  <button :style="s.startEngineBtn" @click="startSimulation" :disabled="!canSubmitSimple || loading">
+                    <span v-if="!loading">Start Engine</span>
+                    <span v-else>Initializing...</span>
+                    <span>→</span>
+                  </button>
+                </div>
+              </template>
+            </template>
+
+            <!-- ───────── ADVANCED MODE ───────── -->
+            <template v-else>
+              <div :style="s.consoleSection">
+                <div class="console-header" :style="s.consoleHeader">
+                  <span>01 / Reality Seeds</span>
+                  <span>Supported: PDF, MD, TXT</span>
+                </div>
+                <div
+                  :style="s.uploadZone"
+                  @dragover.prevent="handleDragOver"
+                  @dragleave.prevent="handleDragLeave"
+                  @drop.prevent="handleDrop"
+                  @click="triggerFileInput"
+                >
+                  <input ref="fileInput" type="file" multiple accept=".pdf,.md,.txt" @change="handleFileSelect" style="display: none" :disabled="loading" />
+                  <div v-if="files.length === 0" :style="s.uploadPlaceholder">
+                    <div :style="s.uploadIcon">↑</div>
+                    <div :style="s.uploadTitle">Drag &amp; drop files here</div>
+                    <div :style="s.uploadHint">or click to browse</div>
+                  </div>
+                  <div v-else :style="s.fileList">
+                    <div v-for="(file, index) in files" :key="index" :style="s.fileItem">
+                      <span>📄</span>
+                      <span :style="s.fileName">{{ file.name }}</span>
+                      <button @click.stop="removeFile(index)" :style="s.removeBtn">×</button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div :style="s.consoleDivider"><span :style="s.consoleDividerText">Parameters</span></div>
+              <div :style="s.consoleDivider"><span :style="s.consoleDividerText">Parameters</span></div>
 
-            <div :style="s.consoleSection">
-              <div class="console-header" :style="s.consoleHeader">
-                <span>>_ 02 / Simulation Prompt</span>
+              <div :style="s.consoleSection">
+                <div class="console-header" :style="s.consoleHeader">
+                  <span>>_ 02 / Simulation Prompt</span>
+                </div>
+                <div :style="s.inputWrapper">
+                  <textarea v-model="formData.simulationRequirement" :style="s.codeInput" placeholder="// Describe your simulation or prediction goal in natural language" rows="6" :disabled="loading"></textarea>
+                  <div :style="s.modelBadge">Engine: Ollama + Neo4j (local)</div>
+                </div>
               </div>
-              <div :style="s.inputWrapper">
-                <textarea v-model="formData.simulationRequirement" :style="s.codeInput" placeholder="// Describe your simulation or prediction goal in natural language" rows="6" :disabled="loading"></textarea>
-                <div :style="s.modelBadge">Engine: Ollama + Neo4j (local)</div>
-              </div>
-            </div>
 
-            <div :style="s.btnSection">
-              <button :style="s.startEngineBtn" @click="startSimulation" :disabled="!canSubmit || loading">
-                <span v-if="!loading">Start Engine</span>
-                <span v-else>Initializing...</span>
-                <span>→</span>
-              </button>
-            </div>
+              <div :style="s.btnSection">
+                <button :style="s.startEngineBtn" @click="startSimulation" :disabled="!canSubmit || loading">
+                  <span v-if="!loading">Start Engine</span>
+                  <span v-else>Initializing...</span>
+                  <span>→</span>
+                </button>
+              </div>
+            </template>
+
           </div>
         </div>
       </section>
@@ -147,6 +224,7 @@
 import { ref, computed, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import HistoryDatabase from '../components/HistoryDatabase.vue'
+import { generateSeedAndPrompt } from '../api/graph'
 
 const mono = 'JetBrains Mono, monospace'
 const sans = 'Space Grotesk, Noto Sans SC, system-ui, sans-serif'
@@ -196,6 +274,12 @@ const s = reactive({
   stepTitle: { fontWeight: '520', fontSize: '1rem', marginBottom: '4px' },
   stepDesc: { fontSize: '0.85rem', color: '#666' },
   rightPanel: { flex: '1.2', display: 'flex', flexDirection: 'column' },
+  // Mode toggle
+  modeToggleRow: { display: 'flex', alignItems: 'center', gap: '0', marginBottom: '12px', flexWrap: 'wrap', rowGap: '8px' },
+  modeTab: { fontFamily: mono, fontSize: '0.8rem', fontWeight: '700', letterSpacing: '1px', padding: '8px 22px', border: '1px solid #CCC', background: '#fff', color: '#888', cursor: 'pointer' },
+  modeTabActive: { fontFamily: mono, fontSize: '0.8rem', fontWeight: '700', letterSpacing: '1px', padding: '8px 22px', border: '1px solid #000', background: '#000', color: '#fff', cursor: 'pointer' },
+  modeHint: { fontFamily: mono, fontSize: '0.72rem', color: '#AAA', marginLeft: '16px' },
+  // Console
   consoleBox: { border: '1px solid #CCC', padding: '8px' },
   consoleSection: { padding: '20px' },
   consoleHeader: { display: 'flex', justifyContent: 'space-between', marginBottom: '15px', fontFamily: mono, fontSize: '0.75rem', color: '#666' },
@@ -211,10 +295,12 @@ const s = reactive({
   consoleDivider: { display: 'flex', alignItems: 'center', margin: '10px 0', borderTop: '1px solid #EEE' },
   consoleDividerText: { padding: '0 15px', fontFamily: mono, fontSize: '0.7rem', color: '#BBB', letterSpacing: '1px' },
   inputWrapper: { position: 'relative', border: '1px solid #DDD', background: '#FAFAFA' },
-  codeInput: { width: '100%', border: 'none', background: 'transparent', padding: '20px', fontFamily: mono, fontSize: '0.9rem', lineHeight: '1.6', resize: 'vertical', outline: 'none', minHeight: '150px' },
+  codeInput: { width: '100%', border: 'none', background: 'transparent', padding: '20px', fontFamily: mono, fontSize: '0.9rem', lineHeight: '1.6', resize: 'vertical', outline: 'none', minHeight: '150px', boxSizing: 'border-box' },
   modelBadge: { position: 'absolute', bottom: '10px', right: '15px', fontFamily: mono, fontSize: '0.7rem', color: '#AAA' },
   btnSection: { padding: '0 20px 20px' },
   startEngineBtn: { width: '100%', background: '#000', color: '#fff', border: 'none', padding: '20px', fontFamily: mono, fontWeight: '700', fontSize: '1.1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', letterSpacing: '1px' },
+  generateBtn: { width: '100%', background: '#FF4500', color: '#fff', border: 'none', padding: '18px 20px', fontFamily: mono, fontWeight: '700', fontSize: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', letterSpacing: '1px' },
+  errorBox: { margin: '0 20px 12px', padding: '12px 16px', border: '1px solid #FF4500', background: '#FFF5F2', color: '#FF4500', fontFamily: mono, fontSize: '0.8rem' },
 })
 
 const steps = [
@@ -227,6 +313,7 @@ const steps = [
 
 const router = useRouter()
 
+// ── Advanced mode state ──
 const formData = ref({ simulationRequirement: '' })
 const files = ref([])
 const loading = ref(false)
@@ -234,10 +321,30 @@ const error = ref('')
 const isDragOver = ref(false)
 const fileInput = ref(null)
 
+// ── Simple mode state ──
+const simpleMode = ref(true)
+const simpleDescription = ref('')
+const isGenerating = ref(false)
+const generatedSeed = ref('')
+const generatedPrompt = ref('')
+const generateError = ref('')
+
+// ── Mode switching ──
+const switchMode = (toSimple) => {
+  simpleMode.value = toSimple
+  generateError.value = ''
+}
+
+// ── Computed ──
 const canSubmit = computed(() => {
   return formData.value.simulationRequirement.trim() !== '' && files.value.length > 0
 })
 
+const canSubmitSimple = computed(() => {
+  return generatedSeed.value.trim() !== '' && generatedPrompt.value.trim() !== ''
+})
+
+// ── Advanced mode handlers ──
 const triggerFileInput = () => { if (!loading.value) fileInput.value?.click() }
 const handleFileSelect = (event) => { addFiles(Array.from(event.target.files)) }
 const handleDragOver = (e) => { isDragOver.value = true }
@@ -254,10 +361,51 @@ const removeFile = (index) => { files.value.splice(index, 1) }
 
 const scrollToBottom = () => { window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }) }
 
+// ── Simple mode: generate seed + prompt via LLM ──
+const generateSimple = async () => {
+  if (!simpleDescription.value.trim() || isGenerating.value) return
+  isGenerating.value = true
+  generateError.value = ''
+  generatedSeed.value = ''
+  generatedPrompt.value = ''
+  try {
+    const res = await generateSeedAndPrompt(simpleDescription.value.trim())
+    // axios interceptor already unwraps response.data, so res IS the payload
+    if (res && res.seed_content && res.prompt) {
+      generatedSeed.value = res.seed_content
+      generatedPrompt.value = res.prompt
+    } else {
+      generateError.value = res?.error || 'Generation failed — please try again.'
+    }
+  } catch (e) {
+    generateError.value = e?.response?.data?.error || e.message || 'Network error during generation.'
+  } finally {
+    isGenerating.value = false
+  }
+}
+
+const resetSimple = () => {
+  generatedSeed.value = ''
+  generatedPrompt.value = ''
+  generateError.value = ''
+}
+
+// ── Start simulation ──
 const startSimulation = () => {
-  if (!canSubmit.value || loading.value) return
+  if (loading.value) return
   import('../store/pendingUpload.js').then(({ setPendingUpload }) => {
-    setPendingUpload(files.value, formData.value.simulationRequirement)
+    if (simpleMode.value) {
+      // Create an in-memory .txt File from the generated seed content
+      const seedFile = new File(
+        [generatedSeed.value],
+        'seed.txt',
+        { type: 'text/plain' }
+      )
+      setPendingUpload([seedFile], generatedPrompt.value)
+    } else {
+      if (!canSubmit.value) return
+      setPendingUpload(files.value, formData.value.simulationRequirement)
+    }
     router.push({ name: 'Process', params: { projectId: 'new' } })
   })
 }

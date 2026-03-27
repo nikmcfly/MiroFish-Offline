@@ -68,3 +68,16 @@ export function getProject(projectId) {
     method: 'get'
   })
 }
+
+/**
+ * Simple mode: generate seed document + simulation prompt from a plain-language description
+ * @param {String} description - User's plain-language prediction goal
+ * @returns {Promise<{ seed_content: string, prompt: string }>}
+ */
+export function generateSeedAndPrompt(description) {
+  return service({
+    url: '/api/graph/simple-generate',
+    method: 'post',
+    data: { description }
+  })
+}
