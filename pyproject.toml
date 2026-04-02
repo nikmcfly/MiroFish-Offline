@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "matfyz-graphrag-personas"
+version = "0.1.0"
+description = "Hybrid GraphRAG system for Czech demographic personas"
+authors = [{ name = "Benjamin Reeves", email = "benjamin.reeves286@student.cuni.cz" }]
+requires-python = ">=3.10"
+dependencies = [
+    "pandas>=2.0.0",
+    "numpy>=1.24.0",
+    "requests>=2.31.0",
+    # Placeholders for future NLP/Graph libraries:
+    # "spacy",
+    # "networkx",
+    # "neo4j",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "black>=23.7.0",
+    "ruff>=0.0.280",
+]
+
+[tool.black]
+line-length = 88
+target-version = ["py310"]
+include = '\.pyi?$'
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+# Enable pycodestyle (E, W), Pyflakes (F), isort (I), and pydocstyle (D)
+lint.select = ["E", "F", "W", "I", "D"]
+lint.ignore = []
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --strict-markers"
+testpaths = ["tests"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
