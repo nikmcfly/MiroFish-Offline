@@ -59,3 +59,7 @@ backend/uploads/
 # Docker 数据
 data/backend/venv311/
 backend/venv311/
+
+# Ignore large dataset and model binaries
+data/external/
+data/raw/

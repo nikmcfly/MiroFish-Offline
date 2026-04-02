@@ -36,6 +36,7 @@ target-version = "py310"
 # Enable pycodestyle (E, W), Pyflakes (F), isort (I), and pydocstyle (D)
 lint.select = ["E", "F", "W", "I", "D"]
 lint.ignore = []
+extend-exclude = ["src/matfyz_graphrag/extraction/nametag3/"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
