@@ -1,16 +1,22 @@
 """
 LLM Client Wrapper
 Unified OpenAI format API calls
-Supports Ollama num_ctx parameter to prevent prompt truncation
+Supports Ollama num_ctx parameter to prevent prompt truncation.
+Falls back to Ollama native API when OpenAI-compatible endpoint
+returns empty content (e.g., thinking-mode models like Gemma 4).
 """
 
 import json
 import os
 import re
+import logging
 from typing import Optional, Dict, Any, List
 from openai import OpenAI
+import requests
 
 from ..config import Config
+
+logger = logging.getLogger(__name__)
 
 
 class LLMClient:
@@ -43,6 +49,36 @@ class LLMClient:
     def _is_ollama(self) -> bool:
         """Check if we're talking to an Ollama server."""
         return '11434' in (self.base_url or '')
+
+    def _ollama_native_url(self) -> str:
+        """Derive the Ollama native API base from the OpenAI-compat base_url."""
+        # e.g., http://localhost:11434/v1 -> http://localhost:11434
+        return re.sub(r'/v1/?$', '', self.base_url or 'http://localhost:11434')
+
+    def _ollama_native_chat(
+        self,
+        messages: List[Dict[str, str]],
+        temperature: float = 0.7,
+        max_tokens: int = 4096,
+    ) -> str:
+        """Call Ollama's native /api/chat endpoint (handles thinking-mode models correctly)."""
+        url = f"{self._ollama_native_url()}/api/chat"
+        payload = {
+            "model": self.model,
+            "messages": messages,
+            "stream": False,
+            "options": {
+                "temperature": temperature,
+                "num_predict": max_tokens,
+                "num_ctx": self._num_ctx,
+            },
+        }
+        resp = requests.post(url, json=payload, timeout=300)
+        resp.raise_for_status()
+        content = resp.json().get("message", {}).get("content", "")
+        # Strip thinking tags if present
+        content = re.sub(r'<think>[\s\S]*?</think>', '', content).strip()
+        return content
 
     def chat(
         self,
@@ -80,9 +116,17 @@ class LLMClient:
             }
 
         response = self.client.chat.completions.create(**kwargs)
-        content = response.choices[0].message.content
+        content = response.choices[0].message.content or ""
         # Some models (like MiniMax M2.5) include <think>thinking content in response, need to remove
         content = re.sub(r'<think>[\s\S]*?</think>', '', content).strip()
+
+        # Fallback: if OpenAI-compat endpoint returned empty content (thinking-mode
+        # models like Gemma 4 consume all tokens on reasoning), retry via Ollama
+        # native API which handles thinking tokens correctly.
+        if not content and self._is_ollama():
+            logger.info("OpenAI-compat returned empty content, falling back to Ollama native API")
+            content = self._ollama_native_chat(messages, temperature, max_tokens)
+
         return content
 
     def chat_json(

@@ -348,8 +348,8 @@ class SimulationRunner:
         
         # Initialize run state
         time_config = config.get("time_config", {})
-        total_hours = time_config.get("total_simulation_hours", 72)
-        minutes_per_round = time_config.get("minutes_per_round", 30)
+        total_hours = int(time_config.get("total_simulation_hours", 72))
+        minutes_per_round = int(time_config.get("minutes_per_round", 30))
         total_rounds = int(total_hours * 60 / minutes_per_round)
         
         # If max_rounds specified, truncate
