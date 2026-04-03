@@ -38,7 +38,7 @@ class LLMClient:
 
         # Ollama context window size — prevents prompt truncation.
         # Read from env OLLAMA_NUM_CTX, default 8192 (Ollama default is only 2048).
-        self._num_ctx = int(os.environ.get('OLLAMA_NUM_CTX', '8192'))
+        self._num_ctx = int(os.environ.get('OLLAMA_NUM_CTX', '32768'))
 
     def _is_ollama(self) -> bool:
         """Check if we're talking to an Ollama server."""

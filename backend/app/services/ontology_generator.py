@@ -265,6 +265,9 @@ Based on the above content, design entity types and relationship types suitable 
         if "analysis_summary" not in result:
             result["analysis_summary"] = ""
 
+        # Filter out malformed entity types (missing 'name' key)
+        result["entity_types"] = [e for e in result["entity_types"] if "name" in e]
+
         # Validate entity types
         for entity in result["entity_types"]:
             if "attributes" not in entity:
@@ -274,6 +277,9 @@ Based on the above content, design entity types and relationship types suitable 
             # Ensure description doesn't exceed 100 characters
             if len(entity.get("description", "")) > 100:
                 entity["description"] = entity["description"][:97] + "..."
+
+        # Filter out malformed edge types (missing 'name' key)
+        result["edge_types"] = [e for e in result["edge_types"] if "name" in e]
 
         # Validate relationship types
         for edge in result["edge_types"]:

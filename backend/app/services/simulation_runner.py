@@ -1098,7 +1098,7 @@ class SimulationRunner:
         return result
     
     @classmethod
-    def cleanup_simulation_logs(cls, simulation_id: str) -> Dict[str, Any]:
+    def cleanup_simulation_logs(cls, simulation_id: str, storage=None, graph_id: str = None) -> Dict[str, Any]:
         """
         Clean up simulation run logs (for force restart)
         
@@ -1112,10 +1112,14 @@ class SimulationRunner:
         - reddit_simulation.db (simulation database)
         - env_status.json (environment status)
         
+        If storage and graph_id are provided, also clears Neo4j graph data.
+        
         Note: Does not delete config files (simulation_config.json) and profile files
         
         Args:
             simulation_id: Simulation ID
+            storage: Optional GraphStorage instance for Neo4j cleanup
+            graph_id: Optional graph ID to clear in Neo4j
             
         Returns:
             Cleanup result information
@@ -1169,6 +1173,16 @@ class SimulationRunner:
         # Clean up in-memory run state
         if simulation_id in cls._run_states:
             del cls._run_states[simulation_id]
+        
+        # Clean up Neo4j graph data if storage provided
+        if storage and graph_id:
+            try:
+                storage.delete_graph(graph_id)
+                cleaned_files.append(f"neo4j:graph:{graph_id}")
+                logger.info(f"Cleared Neo4j graph data: graph_id={graph_id}")
+            except Exception as e:
+                errors.append(f"Failed to clear Neo4j graph: {str(e)}")
+                logger.error(f"Failed to clear Neo4j graph data: {e}")
         
         logger.info(f"Cleanup simulation logs completed: {simulation_id}, deleted files: {cleaned_files}")
         

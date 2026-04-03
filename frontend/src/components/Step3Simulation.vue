@@ -395,7 +395,7 @@ const doStartSimulation = async () => {
     const params = {
       simulation_id: props.simulationId,
       platform: 'parallel',
-      force: true,  // Force restart
+      force: false,
       enable_graph_memory_update: true  // Enable dynamic graph update
     }
 
@@ -684,9 +684,22 @@ watch(() => props.systemLogs?.length, () => {
   })
 })
 
-onMounted(() => {
+onMounted(async () => {
   addLog('Step3 Simulation initialization')
   if (props.simulationId) {
+    try {
+      const res = await getRunStatus(props.simulationId)
+      if (res.success && res.data && res.data.runner_status === 'running') {
+        addLog('Simulation already running — resuming status polling')
+        runStatus.value = res.data
+        phase.value = 1
+        startStatusPolling()
+        startDetailPolling()
+        return
+      }
+    } catch (e) {
+      // No running simulation found, safe to start
+    }
     doStartSimulation()
   }
 })
