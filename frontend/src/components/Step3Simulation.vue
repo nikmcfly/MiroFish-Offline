@@ -689,13 +689,23 @@ onMounted(async () => {
   if (props.simulationId) {
     try {
       const res = await getRunStatus(props.simulationId)
-      if (res.success && res.data && res.data.runner_status === 'running') {
-        addLog('Simulation already running — resuming status polling')
-        runStatus.value = res.data
-        phase.value = 1
-        startStatusPolling()
-        startDetailPolling()
-        return
+      if (res.success && res.data) {
+        const status = res.data.runner_status
+        if (status === 'running') {
+          addLog('Simulation already running — resuming status polling')
+          runStatus.value = res.data
+          phase.value = 1
+          startStatusPolling()
+          startDetailPolling()
+          return
+        }
+        if (status === 'completed' || status === 'stopped') {
+          addLog(`Simulation ${status} — loading results`)
+          runStatus.value = res.data
+          phase.value = 2
+          emit('update-status', 'completed')
+          return
+        }
       }
     } catch (e) {
       // No running simulation found, safe to start
