@@ -319,19 +319,21 @@ class Neo4jStorage(GraphStorage):
                         """
                         MATCH (src:Entity {uuid: $src_uuid})
                         MATCH (tgt:Entity {uuid: $tgt_uuid})
-                        CREATE (src)-[r:RELATION {
-                            uuid: $uuid,
-                            graph_id: $gid,
-                            name: $name,
-                            fact: $fact,
-                            fact_embedding: $fact_embedding,
-                            attributes_json: '{}',
-                            episode_ids: [$episode_id],
-                            created_at: $now,
-                            valid_at: null,
-                            invalid_at: null,
-                            expired_at: null
-                        }]->(tgt)
+                        MERGE (src)-[r:RELATION {graph_id: $gid, name: $name}]->(tgt)
+                        ON CREATE SET
+                            r.uuid = $uuid,
+                            r.fact = $fact,
+                            r.fact_embedding = $fact_embedding,
+                            r.attributes_json = '{}',
+                            r.episode_ids = [$episode_id],
+                            r.created_at = $now,
+                            r.valid_at = null,
+                            r.invalid_at = null,
+                            r.expired_at = null
+                        ON MATCH SET
+                            r.fact = $fact,
+                            r.fact_embedding = $fact_embedding,
+                            r.episode_ids = r.episode_ids + $episode_id
                         """,
                         src_uuid=_source_uuid,
                         tgt_uuid=_target_uuid,
