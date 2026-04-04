@@ -270,6 +270,29 @@ class SimulationRunner:
                 
                 cls._run_states[sim_id] = state
                 
+                # Try to reconnect GraphMemoryUpdater
+                graph_id = None
+                state_json = os.path.join(cls.RUN_STATE_DIR, sim_id, "state.json")
+                if os.path.exists(state_json):
+                    try:
+                        with open(state_json, 'r', encoding='utf-8') as f:
+                            sim_state = json.load(f)
+                        graph_id = sim_state.get("graph_id")
+                    except Exception:
+                        pass
+                
+                if graph_id:
+                    try:
+                        from ..storage import Neo4jStorage
+                        from ..config import Config
+                        storage = Neo4jStorage(Config.NEO4J_URI, Config.NEO4J_USER, Config.NEO4J_PASSWORD)
+                        GraphMemoryManager.create_updater(sim_id, graph_id, storage)
+                        cls._graph_memory_enabled[sim_id] = True
+                        logger.info(f"Reconnected graph memory updater: {sim_id}, graph_id={graph_id}")
+                    except Exception as e:
+                        logger.warning(f"Could not reconnect graph memory for {sim_id}: {e}")
+                        cls._graph_memory_enabled[sim_id] = False
+                
                 monitor_thread = threading.Thread(
                     target=cls._monitor_orphaned_simulation,
                     args=(sim_id, pid),
@@ -337,6 +360,12 @@ class SimulationRunner:
             state.error = str(e)
             cls._save_run_state(state)
         finally:
+            if cls._graph_memory_enabled.get(simulation_id, False):
+                try:
+                    GraphMemoryManager.stop_updater(simulation_id)
+                except Exception:
+                    pass
+                cls._graph_memory_enabled.pop(simulation_id, None)
             cls._monitor_threads.pop(simulation_id, None)
     
     @classmethod
