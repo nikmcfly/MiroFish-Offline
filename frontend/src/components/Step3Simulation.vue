@@ -704,6 +704,7 @@ onMounted(async () => {
           runStatus.value = res.data
           phase.value = 2
           emit('update-status', 'completed')
+          fetchRunStatusDetail()
           return
         }
       }
