@@ -168,7 +168,10 @@ class OasisProfileGenerator:
     # Individual type entities (need to generate specific personas)
     INDIVIDUAL_ENTITY_TYPES = [
         "student", "alumni", "professor", "person", "publicfigure",
-        "expert", "faculty", "official", "journalist", "activist"
+        "expert", "faculty", "official", "journalist", "activist",
+        "consultant", "engineer", "architect", "researcher", "analyst",
+        "director", "manager", "leader", "cto", "ceo", "partner",
+        "developer", "scientist", "strategist", "advisor", "specialist"
     ]
 
     # Group/institutional type entities (need to generate group representative personas)
@@ -431,8 +434,16 @@ class OasisProfileGenerator:
         return "\n\n".join(context_parts)
     
     def _is_individual_entity(self, entity_type: str) -> bool:
-        """Determine if entity is an individual type"""
-        return entity_type.lower() in self.INDIVIDUAL_ENTITY_TYPES
+        """Determine if entity is an individual type.
+
+        Falls back to treating unknown types as individual rather than group,
+        since the ontology generator often creates domain-specific types
+        (e.g. DataArchitect, AIConsultant) that aren't in either list.
+        """
+        if entity_type.lower() in self.INDIVIDUAL_ENTITY_TYPES:
+            return True
+        # Unknown types default to individual rather than group
+        return entity_type.lower() not in self.GROUP_ENTITY_TYPES
 
     def _is_group_entity(self, entity_type: str) -> bool:
         """Determine if entity is a group/institutional type"""
