@@ -315,8 +315,9 @@ class SimulationRunner:
         if not state:
             return
         
-        twitter_position = 0
-        reddit_position = 0
+        # Start from end of existing logs to avoid re-processing old actions
+        twitter_position = os.path.getsize(twitter_log) if os.path.exists(twitter_log) else 0
+        reddit_position = os.path.getsize(reddit_log) if os.path.exists(reddit_log) else 0
         
         def is_alive():
             try:
