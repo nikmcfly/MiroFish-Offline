@@ -57,6 +57,7 @@ def create_app(config_class=Config):
     # Register simulation process cleanup function (ensure all simulation processes terminate on server shutdown)
     from .services.simulation_runner import SimulationRunner
     SimulationRunner.register_cleanup()
+    SimulationRunner.reconnect_orphaned_simulations()
     if should_log_startup:
         logger.info("Simulation process cleanup function registered")
 

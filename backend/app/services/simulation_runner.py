@@ -227,6 +227,149 @@ class SimulationRunner:
     _graph_memory_enabled: Dict[str, bool] = {}  # simulation_id -> enabled
     
     @classmethod
+    def reconnect_orphaned_simulations(cls):
+        """
+        On startup, find simulations with runner_status='running' in their
+        run_state.json whose process is still alive, and start a monitor
+        thread so run_state.json keeps updating.
+        """
+        if not os.path.exists(cls.RUN_STATE_DIR):
+            return
+        
+        for sim_id in os.listdir(cls.RUN_STATE_DIR):
+            state_file = os.path.join(cls.RUN_STATE_DIR, sim_id, "run_state.json")
+            if not os.path.exists(state_file):
+                continue
+            
+            try:
+                state = cls._load_run_state(sim_id)
+                if not state or state.runner_status != RunnerStatus.RUNNING:
+                    continue
+                
+                pid = state.process_pid
+                if not pid:
+                    continue
+                
+                # Check if process is still alive
+                try:
+                    os.kill(pid, 0)
+                except (ProcessLookupError, PermissionError):
+                    state.runner_status = RunnerStatus.STOPPED
+                    state.twitter_running = False
+                    state.reddit_running = False
+                    state.completed_at = datetime.now().isoformat()
+                    state.error = "Process died while backend was restarting"
+                    cls._save_run_state(state)
+                    logger.info(f"Marked dead simulation as stopped: {sim_id} (pid {pid})")
+                    continue
+                
+                if sim_id in cls._monitor_threads:
+                    continue
+                
+                logger.info(f"Reconnecting to orphaned simulation: {sim_id} (pid {pid})")
+                
+                cls._run_states[sim_id] = state
+                
+                # Try to reconnect GraphMemoryUpdater
+                graph_id = None
+                state_json = os.path.join(cls.RUN_STATE_DIR, sim_id, "state.json")
+                if os.path.exists(state_json):
+                    try:
+                        with open(state_json, 'r', encoding='utf-8') as f:
+                            sim_state = json.load(f)
+                        graph_id = sim_state.get("graph_id")
+                    except Exception:
+                        pass
+                
+                if graph_id:
+                    try:
+                        from ..storage import Neo4jStorage
+                        from ..config import Config
+                        storage = Neo4jStorage(Config.NEO4J_URI, Config.NEO4J_USER, Config.NEO4J_PASSWORD)
+                        GraphMemoryManager.create_updater(sim_id, graph_id, storage)
+                        cls._graph_memory_enabled[sim_id] = True
+                        logger.info(f"Reconnected graph memory updater: {sim_id}, graph_id={graph_id}")
+                    except Exception as e:
+                        logger.warning(f"Could not reconnect graph memory for {sim_id}: {e}")
+                        cls._graph_memory_enabled[sim_id] = False
+                
+                monitor_thread = threading.Thread(
+                    target=cls._monitor_orphaned_simulation,
+                    args=(sim_id, pid),
+                    daemon=True
+                )
+                monitor_thread.start()
+                cls._monitor_threads[sim_id] = monitor_thread
+                
+            except Exception as e:
+                logger.error(f"Failed to reconnect simulation {sim_id}: {e}")
+    
+    @classmethod
+    def _monitor_orphaned_simulation(cls, simulation_id: str, pid: int):
+        """Monitor an orphaned simulation by reading its action logs and checking PID liveness."""
+        sim_dir = os.path.join(cls.RUN_STATE_DIR, simulation_id)
+        twitter_log = os.path.join(sim_dir, "twitter", "actions.jsonl")
+        reddit_log = os.path.join(sim_dir, "reddit", "actions.jsonl")
+        
+        state = cls.get_run_state(simulation_id)
+        if not state:
+            return
+        
+        # Start from end of existing logs to avoid re-processing old actions
+        twitter_position = os.path.getsize(twitter_log) if os.path.exists(twitter_log) else 0
+        reddit_position = os.path.getsize(reddit_log) if os.path.exists(reddit_log) else 0
+        
+        def is_alive():
+            try:
+                os.kill(pid, 0)
+                return True
+            except (ProcessLookupError, PermissionError):
+                return False
+        
+        try:
+            while is_alive():
+                if os.path.exists(twitter_log):
+                    twitter_position = cls._read_action_log(
+                        twitter_log, twitter_position, state, "twitter"
+                    )
+                if os.path.exists(reddit_log):
+                    reddit_position = cls._read_action_log(
+                        reddit_log, reddit_position, state, "reddit"
+                    )
+                cls._save_run_state(state)
+                time.sleep(2)
+            
+            # Process ended — final read
+            if os.path.exists(twitter_log):
+                cls._read_action_log(twitter_log, twitter_position, state, "twitter")
+            if os.path.exists(reddit_log):
+                cls._read_action_log(reddit_log, reddit_position, state, "reddit")
+            
+            if state.twitter_completed and state.reddit_completed:
+                state.runner_status = RunnerStatus.COMPLETED
+            else:
+                state.runner_status = RunnerStatus.STOPPED
+            state.twitter_running = False
+            state.reddit_running = False
+            state.completed_at = datetime.now().isoformat()
+            cls._save_run_state(state)
+            logger.info(f"Orphaned simulation finished: {simulation_id}, status={state.runner_status.value}")
+            
+        except Exception as e:
+            logger.error(f"Orphan monitor error for {simulation_id}: {e}")
+            state.runner_status = RunnerStatus.FAILED
+            state.error = str(e)
+            cls._save_run_state(state)
+        finally:
+            if cls._graph_memory_enabled.get(simulation_id, False):
+                try:
+                    GraphMemoryManager.stop_updater(simulation_id)
+                except Exception:
+                    pass
+                cls._graph_memory_enabled.pop(simulation_id, None)
+            cls._monitor_threads.pop(simulation_id, None)
+    
+    @classmethod
     def get_run_state(cls, simulation_id: str) -> Optional[SimulationRunState]:
         """Get run state"""
         if simulation_id in cls._run_states:
@@ -1098,7 +1241,7 @@ class SimulationRunner:
         return result
     
     @classmethod
-    def cleanup_simulation_logs(cls, simulation_id: str) -> Dict[str, Any]:
+    def cleanup_simulation_logs(cls, simulation_id: str, storage=None, graph_id: str = None) -> Dict[str, Any]:
         """
         Clean up simulation run logs (for force restart)
         
@@ -1112,10 +1255,14 @@ class SimulationRunner:
         - reddit_simulation.db (simulation database)
         - env_status.json (environment status)
         
+        If storage and graph_id are provided, also clears Neo4j graph data.
+        
         Note: Does not delete config files (simulation_config.json) and profile files
         
         Args:
             simulation_id: Simulation ID
+            storage: Optional GraphStorage instance for Neo4j cleanup
+            graph_id: Optional graph ID to clear in Neo4j
             
         Returns:
             Cleanup result information
@@ -1169,6 +1316,16 @@ class SimulationRunner:
         # Clean up in-memory run state
         if simulation_id in cls._run_states:
             del cls._run_states[simulation_id]
+        
+        # Clean up Neo4j graph data if storage provided
+        if storage and graph_id:
+            try:
+                storage.delete_graph(graph_id)
+                cleaned_files.append(f"neo4j:graph:{graph_id}")
+                logger.info(f"Cleared Neo4j graph data: graph_id={graph_id}")
+            except Exception as e:
+                errors.append(f"Failed to clear Neo4j graph: {str(e)}")
+                logger.error(f"Failed to clear Neo4j graph data: {e}")
         
         logger.info(f"Cleanup simulation logs completed: {simulation_id}, deleted files: {cleaned_files}")
         

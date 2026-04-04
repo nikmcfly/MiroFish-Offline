@@ -1532,40 +1532,44 @@ def start_simulation():
 
         force_restarted = False
         
-        # Intelligently handle status: if preparation work is complete, reset status to ready
         if state.status != SimulationStatus.READY:
             # Check if preparation is complete
             is_prepared, prepare_info = _check_simulation_prepared(simulation_id)
 
             if is_prepared:
-                # Preparation work complete, verify if simulation is not already running
+                # Check if simulation process is really running
                 if state.status == SimulationStatus.RUNNING:
-                    # Check if simulation process is really running
                     run_state = SimulationRunner.get_run_state(simulation_id)
                     if run_state and run_state.runner_status.value == "running":
-                        # Process is indeed running
                         if force:
-                            # Force mode：Stop runningSimulation
-                            logger.info(f"Force mode：Stop runningSimulation {simulation_id}")
+                            logger.info(f"Force mode: stopping running simulation {simulation_id}")
                             try:
                                 SimulationRunner.stop_simulation(simulation_id)
                             except Exception as e:
                                 logger.warning(f"Warning when stopping simulation: {str(e)}")
                         else:
+                            # Ensure state.json reflects running status
+                            manager._save_simulation_state(state)
                             return jsonify({
                                 "success": False,
                                 "error": f"Simulation is running. Please call /stop first or use force=true to force restart."
                             }), 400
 
-                # If force mode，Clean runtime logs
+                # If force mode, clean runtime logs and Neo4j graph data
                 if force:
                     logger.info(f"Force mode: cleaning simulation runtime files for {simulation_id}")
-                    cleanup_result = SimulationRunner.cleanup_simulation_logs(simulation_id)
+                    cleanup_storage = current_app.extensions.get('neo4j_storage')
+                    cleanup_graph_id = state.graph_id
+                    cleanup_result = SimulationRunner.cleanup_simulation_logs(
+                        simulation_id,
+                        storage=cleanup_storage,
+                        graph_id=cleanup_graph_id
+                    )
                     if not cleanup_result.get("success"):
                         logger.warning(f"Warning when cleaning logs: {cleanup_result.get('errors')}")
                     force_restarted = True
 
-                # Process does not exist or has ended，Reset status to ready
+                # Process does not exist or has ended, reset status to ready
                 logger.info(f"Simulation {simulation_id} preparation complete, resetting status to ready (previous status: {state.status.value})")
                 state.status = SimulationStatus.READY
                 manager._save_simulation_state(state)
@@ -1595,13 +1599,22 @@ def start_simulation():
             
             logger.info(f"Enable knowledge graph memory update: simulation_id={simulation_id}, graph_id={graph_id}")
         
+        # Get GraphStorage for graph memory update
+        storage = None
+        if enable_graph_memory_update:
+            storage = current_app.extensions.get('neo4j_storage')
+            if not storage:
+                logger.warning("GraphStorage not available, graph memory update will be disabled")
+                enable_graph_memory_update = False
+
         # Start simulation
         run_state = SimulationRunner.start_simulation(
             simulation_id=simulation_id,
             platform=platform,
             max_rounds=max_rounds,
             enable_graph_memory_update=enable_graph_memory_update,
-            graph_id=graph_id
+            graph_id=graph_id,
+            storage=storage
         )
         
         # Update simulation status
