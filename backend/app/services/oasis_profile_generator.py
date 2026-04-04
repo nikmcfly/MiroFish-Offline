@@ -478,7 +478,8 @@ class OasisProfileGenerator:
                         {"role": "user", "content": prompt}
                     ],
                     response_format={"type": "json_object"},
-                    temperature=0.7 - (attempt * 0.1)  # Lower temperature with each retry
+                    temperature=0.7 - (attempt * 0.1),  # Lower temperature with each retry
+                    extra_body={"chat_template_kwargs": {"enable_thinking": False}},
                     # Don't set max_tokens, let LLM generate freely
                 )
 
