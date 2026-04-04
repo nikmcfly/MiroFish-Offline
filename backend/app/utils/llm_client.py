@@ -72,12 +72,16 @@ class LLMClient:
 
         if response_format:
             kwargs["response_format"] = response_format
+            # Disable thinking mode (e.g. Qwen3 <think> tags) when requesting
+            # structured JSON output — thinking tokens break JSON parsing and
+            # cause infinite retry loops with vLLM's guided decoding.
+            kwargs.setdefault("extra_body", {})
+            kwargs["extra_body"]["chat_template_kwargs"] = {"enable_thinking": False}
 
         # For Ollama: pass num_ctx via extra_body to prevent prompt truncation
         if self._is_ollama() and self._num_ctx:
-            kwargs["extra_body"] = {
-                "options": {"num_ctx": self._num_ctx}
-            }
+            kwargs.setdefault("extra_body", {})
+            kwargs["extra_body"]["options"] = {"num_ctx": self._num_ctx}
 
         response = self.client.chat.completions.create(**kwargs)
         content = response.choices[0].message.content
