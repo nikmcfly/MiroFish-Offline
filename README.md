@@ -4,9 +4,9 @@
 
 # MiroFish-Offline
 
-**Fully local fork of [MiroFish](https://github.com/666ghj/MiroFish) — no cloud APIs required. English UI.**
+**Vollständig lokaler Fork von [MiroFish](https://github.com/666ghj/MiroFish) — keine Cloud-APIs erforderlich. Deutsche Benutzeroberfläche.**
 
-*A multi-agent swarm intelligence engine that simulates public opinion, market sentiment, and social dynamics. Entirely on your hardware.*
+*Eine Multi-Agenten-Schwarm-Intelligenz-Engine, die öffentliche Meinung, Marktstimmung und soziale Dynamiken simuliert. Vollständig auf deiner eigenen Hardware.*
 
 [![GitHub Stars](https://img.shields.io/github/stars/nikmcfly/MiroFish-Offline?style=flat-square&color=DAA520)](https://github.com/nikmcfly/MiroFish-Offline/stargazers)
 [![GitHub Forks](https://img.shields.io/github/forks/nikmcfly/MiroFish-Offline?style=flat-square)](https://github.com/nikmcfly/MiroFish-Offline/network)
@@ -15,61 +15,61 @@
 
 </div>
 
-## What is this?
+## Was ist das?
 
-MiroFish is a multi-agent simulation engine: upload any document (press release, policy draft, financial report), and it generates hundreds of AI agents with unique personalities that simulate the public reaction on social media. Posts, arguments, opinion shifts — hour by hour.
+MiroFish ist eine Multi-Agenten-Simulations-Engine: Lade ein beliebiges Dokument hoch (Pressemitteilung, Richtlinienentwurf, Finanzbericht) und es generiert Hunderte von KI-Agenten mit einzigartigen Persönlichkeiten, die die öffentliche Reaktion in sozialen Medien simulieren. Beiträge, Argumente, Meinungsverschiebungen — Stunde für Stunde.
 
-The [original MiroFish](https://github.com/666ghj/MiroFish) was built for the Chinese market (Chinese UI, Zep Cloud for knowledge graphs, DashScope API). This fork makes it **fully local and fully English**:
+Das [originale MiroFish](https://github.com/666ghj/MiroFish) wurde für den chinesischen Markt entwickelt (chinesische Benutzeroberfläche, Zep Cloud für Wissensgraphen, DashScope API). Dieser Fork macht es **vollständig lokal und vollständig auf Deutsch**:
 
-| Original MiroFish | MiroFish-Offline |
+| Originales MiroFish | MiroFish-Offline |
 |---|---|
-| Chinese UI | **English UI** (1,000+ strings translated) |
-| Zep Cloud (graph memory) | **Neo4j Community Edition 5.15** |
-| DashScope / OpenAI API (LLM) | **Ollama** (qwen2.5, llama3, etc.) |
-| Zep Cloud embeddings | **nomic-embed-text** via Ollama |
-| Cloud API keys required | **Zero cloud dependencies** |
+| Chinesische Benutzeroberfläche | **Deutsche Benutzeroberfläche** (1.000+ Strings übersetzt) |
+| Zep Cloud (Graph-Speicher) | **Neo4j Community Edition 5.15** |
+| DashScope / OpenAI API (LLM) | **Ollama** (qwen2.5, llama3, usw.) |
+| Zep Cloud Einbettungen | **nomic-embed-text** über Ollama |
+| Cloud-API-Schlüssel erforderlich | **Keine Cloud-Abhängigkeiten** |
 
-## Workflow
+## Arbeitsablauf
 
-1. **Graph Build** — Extracts entities (people, companies, events) and relationships from your document. Builds a knowledge graph with individual and group memory via Neo4j.
-2. **Env Setup** — Generates hundreds of agent personas, each with unique personality, opinion bias, reaction speed, influence level, and memory of past events.
-3. **Simulation** — Agents interact on simulated social platforms: posting, replying, arguing, shifting opinions. The system tracks sentiment evolution, topic propagation, and influence dynamics in real time.
-4. **Report** — A ReportAgent analyzes the post-simulation environment, interviews a focus group of agents, searches the knowledge graph for evidence, and generates a structured analysis.
-5. **Interaction** — Chat with any agent from the simulated world. Ask them why they posted what they posted. Full memory and personality persists.
+1. **Graphaufbau** — Extrahiert Entitäten (Personen, Unternehmen, Ereignisse) und Beziehungen aus deinem Dokument. Erstellt einen Wissensgraphen mit individuellem und Gruppengedächtnis über Neo4j.
+2. **Umgebung einrichten** — Generiert Hunderte von Agenten-Personas, jede mit einzigartiger Persönlichkeit, Meinungsverzerrung, Reaktionsgeschwindigkeit, Einflussniveau und Erinnerung an vergangene Ereignisse.
+3. **Simulation** — Agenten interagieren auf simulierten sozialen Plattformen: Beiträge verfassen, antworten, streiten, Meinungen verschieben. Das System verfolgt Sentimententwicklung, Themenverbreitung und Einfluss-Dynamiken in Echtzeit.
+4. **Bericht** — Ein ReportAgent analysiert das Post-Simulations-Umfeld, interviewt eine Fokusgruppe von Agenten, durchsucht den Wissensgraphen nach Beweisen und erstellt eine strukturierte Analyse.
+5. **Interaktion** — Chatte mit beliebigen Agenten der simulierten Welt. Frage sie, warum sie gepostet haben, was sie gepostet haben. Vollständiges Gedächtnis und Persönlichkeit bleibt erhalten.
 
 ## Screenshot
 
 <div align="center">
-<img src="./static/image/mirofish-offline-screenshot.jpg" alt="MiroFish Offline — English UI" width="100%"/>
+<img src="./static/image/mirofish-offline-screenshot.jpg" alt="MiroFish Offline — Deutsche Benutzeroberfläche" width="100%"/>
 </div>
 
-## Quick Start
+## Schnellstart
 
-### Prerequisites
+### Voraussetzungen
 
-- Docker & Docker Compose (recommended), **or**
+- Docker & Docker Compose (empfohlen), **oder**
 - Python 3.11+, Node.js 18+, Neo4j 5.15+, Ollama
 
-### Option A: Docker (easiest)
+### Option A: Docker (einfachste Methode)
 
 ```bash
 git clone https://github.com/nikmcfly/MiroFish-Offline.git
 cd MiroFish-Offline
 cp .env.example .env
 
-# Start all services (Neo4j, Ollama, MiroFish)
+# Alle Dienste starten (Neo4j, Ollama, MiroFish)
 docker compose up -d
 
-# Pull the required models into Ollama
+# Benötigte Modelle in Ollama laden
 docker exec mirofish-ollama ollama pull qwen2.5:32b
 docker exec mirofish-ollama ollama pull nomic-embed-text
 ```
 
-Open `http://localhost:3000` — that's it.
+`http://localhost:3000` öffnen — fertig.
 
-### Option B: Manual
+### Option B: Manuell
 
-**1. Start Neo4j**
+**1. Neo4j starten**
 
 ```bash
 docker run -d --name neo4j \
@@ -78,26 +78,26 @@ docker run -d --name neo4j \
   neo4j:5.15-community
 ```
 
-**2. Start Ollama & pull models**
+**2. Ollama starten & Modelle laden**
 
 ```bash
 ollama serve &
-ollama pull qwen2.5:32b      # LLM (or qwen2.5:14b for less VRAM)
-ollama pull nomic-embed-text  # Embeddings (768d)
+ollama pull qwen2.5:32b      # LLM (oder qwen2.5:14b für weniger VRAM)
+ollama pull nomic-embed-text  # Einbettungen (768d)
 ```
 
-**3. Configure & run backend**
+**3. Backend konfigurieren & starten**
 
 ```bash
 cp .env.example .env
-# Edit .env if your Neo4j/Ollama are on non-default ports
+# .env bearbeiten, falls Neo4j/Ollama auf anderen Ports laufen
 
 cd backend
 pip install -r requirements.txt
 python run.py
 ```
 
-**4. Run frontend**
+**4. Frontend starten**
 
 ```bash
 cd frontend
@@ -105,14 +105,14 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000`.
+`http://localhost:3000` öffnen.
 
-## Configuration
+## Konfiguration
 
-All settings are in `.env` (copy from `.env.example`):
+Alle Einstellungen befinden sich in `.env` (kopiere von `.env.example`):
 
 ```bash
-# LLM — points to local Ollama (OpenAI-compatible API)
+# LLM — zeigt auf lokales Ollama (OpenAI-kompatible API)
 LLM_API_KEY=ollama
 LLM_BASE_URL=http://localhost:11434/v1
 LLM_MODEL_NAME=qwen2.5:32b
@@ -122,16 +122,16 @@ NEO4J_URI=bolt://localhost:7687
 NEO4J_USER=neo4j
 NEO4J_PASSWORD=mirofish
 
-# Embeddings
+# Einbettungen
 EMBEDDING_MODEL=nomic-embed-text
 EMBEDDING_BASE_URL=http://localhost:11434
 ```
 
-Works with any OpenAI-compatible API — swap Ollama for Claude, GPT, or any other provider by changing `LLM_BASE_URL` and `LLM_API_KEY`.
+Funktioniert mit jeder OpenAI-kompatiblen API — ersetze Ollama durch Claude, GPT oder einen anderen Anbieter, indem du `LLM_BASE_URL` und `LLM_API_KEY` änderst.
 
-## Architecture
+## Architektur
 
-This fork introduces a clean abstraction layer between the application and the graph database:
+Dieser Fork führt eine saubere Abstraktionsschicht zwischen der Anwendung und der Graphdatenbank ein:
 
 ```
 ┌─────────────────────────────────────────┐
@@ -140,20 +140,20 @@ This fork introduces a clean abstraction layer between the application and the g
 └──────────────┬──────────────────────────┘
                │ app.extensions['neo4j_storage']
 ┌──────────────▼──────────────────────────┐
-│           Service Layer                  │
+│           Dienst-Schicht                 │
 │  EntityReader  GraphToolsService         │
 │  GraphMemoryUpdater  ReportAgent         │
 └──────────────┬──────────────────────────┘
                │ storage: GraphStorage
 ┌──────────────▼──────────────────────────┐
-│         GraphStorage (abstract)          │
+│         GraphStorage (abstrakt)          │
 │              │                            │
 │    ┌─────────▼─────────┐                │
 │    │   Neo4jStorage     │                │
 │    │  ┌───────────────┐ │                │
 │    │  │ EmbeddingService│ ← Ollama       │
 │    │  │ NERExtractor   │ ← Ollama LLM   │
-│    │  │ SearchService  │ ← Hybrid search │
+│    │  │ SearchService  │ ← Hybrid-Suche │
 │    │  └───────────────┘ │                │
 │    └───────────────────┘                │
 └─────────────────────────────────────────┘
@@ -164,42 +164,43 @@ This fork introduces a clean abstraction layer between the application and the g
         └─────────────┘
 ```
 
-**Key design decisions:**
+**Wichtige Design-Entscheidungen:**
 
-- `GraphStorage` is an abstract interface — swap Neo4j for any other graph DB by implementing one class
-- Dependency injection via Flask `app.extensions` — no global singletons
-- Hybrid search: 0.7 × vector similarity + 0.3 × BM25 keyword search
-- Synchronous NER/RE extraction via local LLM (replaces Zep's async episodes)
-- All original dataclasses and LLM tools (InsightForge, Panorama, Agent Interviews) preserved
+- `GraphStorage` ist eine abstrakte Schnittstelle — tausche Neo4j gegen eine andere Graph-Datenbank aus, indem du eine Klasse implementierst
+- Dependency Injection über Flask `app.extensions` — keine globalen Singletons
+- Hybridsuche: 0,7 × Vektorähnlichkeit + 0,3 × BM25-Schlüsselwortsuche
+- Synchrone NER/RE-Extraktion über lokales LLM (ersetzt Zeps asynchrone Episoden)
+- Alle originalen Datenklassen und LLM-Tools (InsightForge, Panorama, Agenten-Interviews) erhalten
 
-## Hardware Requirements
+## Hardware-Anforderungen
 
-| Component | Minimum | Recommended |
+| Komponente | Minimum | Empfohlen |
 |---|---|---|
 | RAM | 16 GB | 32 GB |
-| VRAM (GPU) | 10 GB (14b model) | 24 GB (32b model) |
-| Disk | 20 GB | 50 GB |
-| CPU | 4 cores | 8+ cores |
+| VRAM (GPU) | 10 GB (14b-Modell) | 24 GB (32b-Modell) |
+| Festplatte | 20 GB | 50 GB |
+| CPU | 4 Kerne | 8+ Kerne |
 
-CPU-only mode works but is significantly slower for LLM inference. For lighter setups, use `qwen2.5:14b` or `qwen2.5:7b`.
+Nur-CPU-Modus funktioniert, ist aber für LLM-Inferenz deutlich langsamer. Für leichtere Setups verwende `qwen2.5:14b` oder `qwen2.5:7b`.
 
-## Use Cases
+## Anwendungsfälle
 
-- **PR crisis testing** — simulate the public reaction to a press release before publishing
-- **Trading signal generation** — feed financial news and observe simulated market sentiment
-- **Policy impact analysis** — test draft regulations against simulated public response
-- **Creative experiments** — someone fed it a classical Chinese novel with a lost ending; the agents wrote a narratively consistent conclusion
+- **PR-Krisentests** — Simuliere die öffentliche Reaktion auf eine Pressemitteilung, bevor sie veröffentlicht wird
+- **Handelssignal-Generierung** — Füttere Finanznachrichten ein und beobachte die simulierte Marktstimmung
+- **Politikfolgenabschätzung** — Teste Regulierungsentwürfe gegen eine simulierte öffentliche Reaktion
+- **Kreative Experimente** — Jemand hat einen klassischen chinesischen Roman mit einem verlorenen Ende eingegeben; die Agenten schrieben einen narrativ konsistenten Abschluss
 
-## License
+## Lizenz
 
-AGPL-3.0 — same as the original MiroFish project. See [LICENSE](./LICENSE).
+AGPL-3.0 — identisch mit dem originalen MiroFish-Projekt. Siehe [LICENSE](./LICENSE).
 
-## Credits & Attribution
+## Danksagungen & Urheberschaft
 
-This is a modified fork of [MiroFish](https://github.com/666ghj/MiroFish) by [666ghj](https://github.com/666ghj), originally supported by [Shanda Group](https://www.shanda.com/). The simulation engine is powered by [OASIS](https://github.com/camel-ai/oasis) from the CAMEL-AI team.
+Dies ist ein modifizierter Fork von [MiroFish](https://github.com/666ghj/MiroFish) von [666ghj](https://github.com/666ghj), ursprünglich unterstützt von [Shanda Group](https://www.shanda.com/). Die Simulations-Engine basiert auf [OASIS](https://github.com/camel-ai/oasis) vom CAMEL-AI Team.
 
-**Modifications in this fork:**
-- Backend migrated from Zep Cloud to local Neo4j CE 5.15 + Ollama
-- Entire frontend translated from Chinese to English (20 files, 1,000+ strings)
-- All Zep references replaced with Neo4j across the UI
-- Rebranded to MiroFish Offline
+**Änderungen in diesem Fork:**
+- Backend von Zep Cloud auf lokales Neo4j CE 5.15 + Ollama migriert
+- Gesamtes Frontend von Chinesisch auf Englisch übersetzt (20 Dateien, 1.000+ Strings)
+- Deutsche Übersetzung der gesamten Benutzeroberfläche
+- Alle Zep-Referenzen durch Neo4j in der gesamten UI ersetzt
+- Umbenannt zu MiroFish Offline
