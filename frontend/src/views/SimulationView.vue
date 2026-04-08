@@ -1,6 +1,6 @@
 <template>
   <div class="main-view">
-    <!-- Header -->
+    <!-- Kopfzeile -->
     <header class="app-header">
       <div class="header-left">
         <div class="brand" @click="router.push('/')">MIROFISH OFFLINE</div>
@@ -15,15 +15,15 @@
             :class="{ active: viewMode === mode }"
             @click="viewMode = mode"
           >
-            {{ { graph: 'Graph', split: 'Split', workbench: 'Workbench' }[mode] }}
+            {{ { graph: 'Graph', split: 'Geteilt', workbench: 'Arbeitsbereich' }[mode] }}
           </button>
         </div>
       </div>
 
       <div class="header-right">
         <div class="workflow-step">
-          <span class="step-num">Step 2/5</span>
-          <span class="step-name">Env Setup</span>
+          <span class="step-num">Schritt 2/5</span>
+          <span class="step-name">Umgebungs-Setup</span>
         </div>
         <div class="step-divider"></div>
         <span class="status-indicator" :class="statusClass">
@@ -33,9 +33,9 @@
       </div>
     </header>
 
-    <!-- Main Content Area -->
+    <!-- Hauptinhaltsbereich -->
     <main class="content-area">
-      <!-- Left Panel: Graph -->
+      <!-- Linkes Panel: Graph -->
       <div class="panel-wrapper left" :style="leftPanelStyle">
         <GraphPanel 
           :graphData="graphData"
@@ -46,7 +46,7 @@
         />
       </div>
 
-      <!-- Right Panel: Step2 Env Setup -->
+      <!-- Rechtes Panel: Schritt 2 Umgebungs-Setup -->
       <div class="panel-wrapper right" :style="rightPanelStyle">
         <Step2EnvSetup
           :simulationId="currentSimulationId"
@@ -74,15 +74,14 @@ import { getSimulation, stopSimulation, getEnvStatus, closeSimulationEnv } from 
 const route = useRoute()
 const router = useRouter()
 
-// Props
 const props = defineProps({
   simulationId: String
 })
 
-// Layout State
+// Layout-Zustand
 const viewMode = ref('split')
 
-// Data State
+// Datenzustand
 const currentSimulationId = ref(route.params.simulationId)
 const projectData = ref(null)
 const graphData = ref(null)
@@ -90,7 +89,7 @@ const graphLoading = ref(false)
 const systemLogs = ref([])
 const currentStatus = ref('processing') // processing | completed | error
 
-// --- Computed Layout Styles ---
+// --- Berechnete Layout-Stile ---
 const leftPanelStyle = computed(() => {
   if (viewMode.value === 'graph') return { width: '100%', opacity: 1, transform: 'translateX(0)' }
   if (viewMode.value === 'workbench') return { width: '0%', opacity: 0, transform: 'translateX(-20px)' }
@@ -103,20 +102,20 @@ const rightPanelStyle = computed(() => {
   return { width: '50%', opacity: 1, transform: 'translateX(0)' }
 })
 
-// --- Status Computed ---
+// --- Status berechnet ---
 const statusClass = computed(() => {
   return currentStatus.value
 })
 
 const statusText = computed(() => {
-  if (currentStatus.value === 'error') return 'Error'
-  if (currentStatus.value === 'completed') return 'Ready'
-  return 'Preparing'
+  if (currentStatus.value === 'error') return 'Fehler'
+  if (currentStatus.value === 'completed') return 'Bereit'
+  return 'Vorbereitung'
 })
 
-// --- Helpers ---
+// --- Hilfsfunktionen ---
 const addLog = (msg) => {
-  const time = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }) + '.' + new Date().getMilliseconds().toString().padStart(3, '0')
+  const time = new Date().toLocaleTimeString('de-DE', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }) + '.' + new Date().getMilliseconds().toString().padStart(3, '0')
   systemLogs.value.push({ time, msg })
   if (systemLogs.value.length > 100) {
     systemLogs.value.shift()
@@ -127,7 +126,7 @@ const updateStatus = (status) => {
   currentStatus.value = status
 }
 
-// --- Layout Methods ---
+// --- Layout-Methoden ---
 const toggleMaximize = (target) => {
   if (viewMode.value === target) {
     viewMode.value = 'split'
@@ -137,7 +136,6 @@ const toggleMaximize = (target) => {
 }
 
 const handleGoBack = () => {
-  // Return to process page
   if (projectData.value?.project_id) {
     router.push({ name: 'Process', params: { projectId: projectData.value.project_id } })
   } else {
@@ -146,122 +144,102 @@ const handleGoBack = () => {
 }
 
 const handleNextStep = (params = {}) => {
-  addLog('Entering Step 3: Simulation')
+  addLog('Schritt 3 wird betreten: Simulation')
 
-  // Log simulation rounds configuration
   if (params.maxRounds) {
-    addLog(`Custom simulation rounds: ${params.maxRounds}`)
+    addLog(`Benutzerdefinierte Simulationsrunden: ${params.maxRounds}`)
   } else {
-    addLog('Using auto-configured simulation rounds')
+    addLog('Automatisch konfigurierte Simulationsrunden werden verwendet')
   }
 
-  // Build route parameters
   const routeParams = {
     name: 'SimulationRun',
     params: { simulationId: currentSimulationId.value }
   }
 
-  // If custom rounds exist, pass via query parameters
   if (params.maxRounds) {
     routeParams.query = { maxRounds: params.maxRounds }
   }
 
-  // Navigate to Step 3 page
   router.push(routeParams)
 }
 
-// --- Data Logic ---
+// --- Daten-Logik ---
 
-/**
- * Check and stop running simulation
- * When user returns from Step 3 to Step 2, assume user wants to exit simulation
- */
 const checkAndStopRunningSimulation = async () => {
   if (!currentSimulationId.value) return
 
   try {
-    // First check if simulation environment is alive
     const envStatusRes = await getEnvStatus({ simulation_id: currentSimulationId.value })
 
     if (envStatusRes.success && envStatusRes.data?.env_alive) {
-      addLog('Simulation environment running, shutting down...')
+      addLog('Simulationsumgebung läuft, wird beendet...')
 
-      // Try graceful shutdown
       try {
         const closeRes = await closeSimulationEnv({
           simulation_id: currentSimulationId.value,
-          timeout: 10  // 10 second timeout
+          timeout: 10
         })
 
         if (closeRes.success) {
-          addLog('✓ Simulation environment closed')
+          addLog('✓ Simulationsumgebung geschlossen')
         } else {
-          addLog(`Failed to close simulation env: ${closeRes.error || 'Unknown error'}`)
-          // If graceful shutdown fails, try force stop
+          addLog(`Simulationsumgebung konnte nicht geschlossen werden: ${closeRes.error || 'Unbekannter Fehler'}`)
           await forceStopSimulation()
         }
       } catch (closeErr) {
-        addLog(`Close env exception: ${closeErr.message}`)
-        // If graceful shutdown fails, try force stop
+        addLog(`Ausnahme beim Schließen der Umgebung: ${closeErr.message}`)
         await forceStopSimulation()
       }
     } else {
-      // Environment not running, but process may still exist, check simulation status
       const simRes = await getSimulation(currentSimulationId.value)
       if (simRes.success && simRes.data?.status === 'running') {
-        addLog('Simulation is running, stopping...')
+        addLog('Simulation läuft, wird gestoppt...')
         await forceStopSimulation()
       }
     }
   } catch (err) {
-    // Failed to check environment status, does not affect subsequent flow
-    console.warn('Failed to check simulation status:', err)
+    console.warn('Simulationsstatus konnte nicht überprüft werden:', err)
   }
 }
 
-/**
- * Force stop simulation
- */
 const forceStopSimulation = async () => {
   try {
     const stopRes = await stopSimulation({ simulation_id: currentSimulationId.value })
     if (stopRes.success) {
-      addLog('✓ Simulation force stopped')
+      addLog('✓ Simulation zwangsweise gestoppt')
     } else {
-      addLog(`Failed to force stop simulation: ${stopRes.error || 'Unknown error'}`)
+      addLog(`Simulation konnte nicht zwangsweise gestoppt werden: ${stopRes.error || 'Unbekannter Fehler'}`)
     }
   } catch (err) {
-    addLog(`Force stop exception: ${err.message}`)
+    addLog(`Ausnahme beim Zwangsstopp: ${err.message}`)
   }
 }
 
 const loadSimulationData = async () => {
   try {
-    addLog(`Loading simulation data: ${currentSimulationId.value}`)
+    addLog(`Simulationsdaten werden geladen: ${currentSimulationId.value}`)
 
-    // Get simulation info
     const simRes = await getSimulation(currentSimulationId.value)
     if (simRes.success && simRes.data) {
       const simData = simRes.data
 
-      // Get project info
       if (simData.project_id) {
         const projRes = await getProject(simData.project_id)
         if (projRes.success && projRes.data) {
           projectData.value = projRes.data
-          addLog(`Project loaded: ${projRes.data.project_id}`)
+          addLog(`Projekt geladen: ${projRes.data.project_id}`)
 
-          // Get graph data
           if (projRes.data.graph_id) {
             await loadGraph(projRes.data.graph_id)
           }
         }
       }
     } else {
-      addLog(`Failed to load simulation data: ${simRes.error || 'Unknown error'}`)
+      addLog(`Simulationsdaten konnten nicht geladen werden: ${simRes.error || 'Unbekannter Fehler'}`)
     }
   } catch (err) {
-    addLog(`Load error: ${err.message}`)
+    addLog(`Ladefehler: ${err.message}`)
   }
 }
 
@@ -271,10 +249,10 @@ const loadGraph = async (graphId) => {
     const res = await getGraphData(graphId)
     if (res.success) {
       graphData.value = res.data
-      addLog('Graph data loaded successfully')
+      addLog('Graph-Daten erfolgreich geladen')
     }
   } catch (err) {
-    addLog(`Graph load failed: ${err.message}`)
+    addLog(`Graph-Laden fehlgeschlagen: ${err.message}`)
   } finally {
     graphLoading.value = false
   }
@@ -287,12 +265,8 @@ const refreshGraph = () => {
 }
 
 onMounted(async () => {
-  addLog('SimulationView initialized')
-
-  // Check and stop running simulation (when user returns from Step 3)
+  addLog('SimulationsAnsicht initialisiert')
   await checkAndStopRunningSimulation()
-
-  // Load simulation data
   loadSimulationData()
 })
 </script>
@@ -307,7 +281,6 @@ onMounted(async () => {
   font-family: 'Space Grotesk', 'Noto Sans SC', system-ui, sans-serif;
 }
 
-/* Header */
 .app-header {
   height: 60px;
   border-bottom: 1px solid #EAEAEA;
@@ -412,7 +385,6 @@ onMounted(async () => {
 
 @keyframes pulse { 50% { opacity: 0.5; } }
 
-/* Content */
 .content-area {
   flex: 1;
   display: flex;
@@ -431,4 +403,3 @@ onMounted(async () => {
   border-right: 1px solid #EAEAEA;
 }
 </style>
-
