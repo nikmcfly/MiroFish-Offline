@@ -1,6 +1,6 @@
 <template>
   <div class="main-view">
-    <!-- Header -->
+    <!-- Kopfzeile -->
     <header class="app-header">
       <div class="header-left">
         <div class="brand" @click="router.push('/')">MIROFISH OFFLINE</div>
@@ -15,15 +15,15 @@
             :class="{ active: viewMode === mode }"
             @click="viewMode = mode"
           >
-            {{ { graph: 'Graph', split: 'Split', workbench: 'Workbench' }[mode] }}
+            {{ { graph: 'Graph', split: 'Geteilt', workbench: 'Arbeitsbereich' }[mode] }}
           </button>
         </div>
       </div>
 
       <div class="header-right">
         <div class="workflow-step">
-          <span class="step-num">Step 2/5</span>
-          <span class="step-name">Env Setup</span>
+          <span class="step-num">Schritt 2/5</span>
+          <span class="step-name">Umgebungs-Setup</span>
         </div>
         <div class="step-divider"></div>
         <span class="status-indicator" :class="statusClass">
@@ -33,9 +33,9 @@
       </div>
     </header>
 
-    <!-- Main Content Area -->
+    <!-- Hauptinhaltsbereich -->
     <main class="content-area">
-      <!-- Left Panel: Graph -->
+      <!-- Linkes Panel: Graph -->
       <div class="panel-wrapper left" :style="leftPanelStyle">
         <GraphPanel 
           :graphData="graphData"
@@ -46,7 +46,7 @@
         />
       </div>
 
-      <!-- Right Panel: Step2 Env Setup -->
+      <!-- Rechtes Panel: Schritt 2 Umgebungs-Setup -->
       <div class="panel-wrapper right" :style="rightPanelStyle">
         <Step2EnvSetup
           :simulationId="currentSimulationId"
@@ -74,15 +74,12 @@ import { getSimulation, stopSimulation, getEnvStatus, closeSimulationEnv } from 
 const route = useRoute()
 const router = useRouter()
 
-// Props
 const props = defineProps({
   simulationId: String
 })
 
-// Layout State
 const viewMode = ref('split')
 
-// Data State
 const currentSimulationId = ref(route.params.simulationId)
 const projectData = ref(null)
 const graphData = ref(null)
@@ -90,7 +87,6 @@ const graphLoading = ref(false)
 const systemLogs = ref([])
 const currentStatus = ref('processing') // processing | completed | error
 
-// --- Computed Layout Styles ---
 const leftPanelStyle = computed(() => {
   if (viewMode.value === 'graph') return { width: '100%', opacity: 1, transform: 'translateX(0)' }
   if (viewMode.value === 'workbench') return { width: '0%', opacity: 0, transform: 'translateX(-20px)' }
@@ -103,41 +99,29 @@ const rightPanelStyle = computed(() => {
   return { width: '50%', opacity: 1, transform: 'translateX(0)' }
 })
 
-// --- Status Computed ---
-const statusClass = computed(() => {
-  return currentStatus.value
-})
+const statusClass = computed(() => currentStatus.value)
 
 const statusText = computed(() => {
-  if (currentStatus.value === 'error') return 'Error'
-  if (currentStatus.value === 'completed') return 'Ready'
-  return 'Preparing'
+  if (currentStatus.value === 'error') return 'Fehler'
+  if (currentStatus.value === 'completed') return 'Bereit'
+  return 'Wird vorbereitet'
 })
 
-// --- Helpers ---
 const addLog = (msg) => {
-  const time = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }) + '.' + new Date().getMilliseconds().toString().padStart(3, '0')
+  const time = new Date().toLocaleTimeString('de-DE', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }) + '.' + new Date().getMilliseconds().toString().padStart(3, '0')
   systemLogs.value.push({ time, msg })
-  if (systemLogs.value.length > 100) {
-    systemLogs.value.shift()
-  }
+  if (systemLogs.value.length > 100) systemLogs.value.shift()
 }
 
 const updateStatus = (status) => {
   currentStatus.value = status
 }
 
-// --- Layout Methods ---
 const toggleMaximize = (target) => {
-  if (viewMode.value === target) {
-    viewMode.value = 'split'
-  } else {
-    viewMode.value = target
-  }
+  viewMode.value = viewMode.value === target ? 'split' : target
 }
 
 const handleGoBack = () => {
-  // Return to process page
   if (projectData.value?.project_id) {
     router.push({ name: 'Process', params: { projectId: projectData.value.project_id } })
   } else {
@@ -146,122 +130,82 @@ const handleGoBack = () => {
 }
 
 const handleNextStep = (params = {}) => {
-  addLog('Entering Step 3: Simulation')
-
-  // Log simulation rounds configuration
+  addLog('Schritt 3 wird gestartet: Simulation')
   if (params.maxRounds) {
-    addLog(`Custom simulation rounds: ${params.maxRounds}`)
+    addLog(`Benutzerdefinierte Simulationsrunden: ${params.maxRounds}`)
   } else {
-    addLog('Using auto-configured simulation rounds')
+    addLog('Automatisch konfigurierte Simulationsrunden werden verwendet')
   }
-
-  // Build route parameters
   const routeParams = {
     name: 'SimulationRun',
     params: { simulationId: currentSimulationId.value }
   }
-
-  // If custom rounds exist, pass via query parameters
-  if (params.maxRounds) {
-    routeParams.query = { maxRounds: params.maxRounds }
-  }
-
-  // Navigate to Step 3 page
+  if (params.maxRounds) routeParams.query = { maxRounds: params.maxRounds }
   router.push(routeParams)
 }
 
-// --- Data Logic ---
-
-/**
- * Check and stop running simulation
- * When user returns from Step 3 to Step 2, assume user wants to exit simulation
- */
 const checkAndStopRunningSimulation = async () => {
   if (!currentSimulationId.value) return
-
   try {
-    // First check if simulation environment is alive
     const envStatusRes = await getEnvStatus({ simulation_id: currentSimulationId.value })
-
     if (envStatusRes.success && envStatusRes.data?.env_alive) {
-      addLog('Simulation environment running, shutting down...')
-
-      // Try graceful shutdown
+      addLog('Simulationsumgebung läuft, wird beendet...')
       try {
-        const closeRes = await closeSimulationEnv({
-          simulation_id: currentSimulationId.value,
-          timeout: 10  // 10 second timeout
-        })
-
+        const closeRes = await closeSimulationEnv({ simulation_id: currentSimulationId.value, timeout: 10 })
         if (closeRes.success) {
-          addLog('✓ Simulation environment closed')
+          addLog('✓ Simulationsumgebung geschlossen')
         } else {
-          addLog(`Failed to close simulation env: ${closeRes.error || 'Unknown error'}`)
-          // If graceful shutdown fails, try force stop
+          addLog(`Schließen fehlgeschlagen: ${closeRes.error || 'Unbekannter Fehler'}`)
           await forceStopSimulation()
         }
       } catch (closeErr) {
-        addLog(`Close env exception: ${closeErr.message}`)
-        // If graceful shutdown fails, try force stop
+        addLog(`Fehler beim Schließen: ${closeErr.message}`)
         await forceStopSimulation()
       }
     } else {
-      // Environment not running, but process may still exist, check simulation status
       const simRes = await getSimulation(currentSimulationId.value)
       if (simRes.success && simRes.data?.status === 'running') {
-        addLog('Simulation is running, stopping...')
+        addLog('Simulation läuft, wird gestoppt...')
         await forceStopSimulation()
       }
     }
   } catch (err) {
-    // Failed to check environment status, does not affect subsequent flow
-    console.warn('Failed to check simulation status:', err)
+    console.warn('Simulationsstatus konnte nicht geprüft werden:', err)
   }
 }
 
-/**
- * Force stop simulation
- */
 const forceStopSimulation = async () => {
   try {
     const stopRes = await stopSimulation({ simulation_id: currentSimulationId.value })
     if (stopRes.success) {
-      addLog('✓ Simulation force stopped')
+      addLog('✓ Simulation zwangsweise gestoppt')
     } else {
-      addLog(`Failed to force stop simulation: ${stopRes.error || 'Unknown error'}`)
+      addLog(`Stopp fehlgeschlagen: ${stopRes.error || 'Unbekannter Fehler'}`)
     }
   } catch (err) {
-    addLog(`Force stop exception: ${err.message}`)
+    addLog(`Stopp-Fehler: ${err.message}`)
   }
 }
 
 const loadSimulationData = async () => {
   try {
-    addLog(`Loading simulation data: ${currentSimulationId.value}`)
-
-    // Get simulation info
+    addLog(`Simulationsdaten werden geladen: ${currentSimulationId.value}`)
     const simRes = await getSimulation(currentSimulationId.value)
     if (simRes.success && simRes.data) {
       const simData = simRes.data
-
-      // Get project info
       if (simData.project_id) {
         const projRes = await getProject(simData.project_id)
         if (projRes.success && projRes.data) {
           projectData.value = projRes.data
-          addLog(`Project loaded: ${projRes.data.project_id}`)
-
-          // Get graph data
-          if (projRes.data.graph_id) {
-            await loadGraph(projRes.data.graph_id)
-          }
+          addLog(`Projekt geladen: ${projRes.data.project_id}`)
+          if (projRes.data.graph_id) await loadGraph(projRes.data.graph_id)
         }
       }
     } else {
-      addLog(`Failed to load simulation data: ${simRes.error || 'Unknown error'}`)
+      addLog(`Fehler beim Laden der Simulationsdaten: ${simRes.error || 'Unbekannter Fehler'}`)
     }
   } catch (err) {
-    addLog(`Load error: ${err.message}`)
+    addLog(`Ladefehler: ${err.message}`)
   }
 }
 
@@ -271,28 +215,22 @@ const loadGraph = async (graphId) => {
     const res = await getGraphData(graphId)
     if (res.success) {
       graphData.value = res.data
-      addLog('Graph data loaded successfully')
+      addLog('Graphdaten erfolgreich geladen')
     }
   } catch (err) {
-    addLog(`Graph load failed: ${err.message}`)
+    addLog(`Graphladen fehlgeschlagen: ${err.message}`)
   } finally {
     graphLoading.value = false
   }
 }
 
 const refreshGraph = () => {
-  if (projectData.value?.graph_id) {
-    loadGraph(projectData.value.graph_id)
-  }
+  if (projectData.value?.graph_id) loadGraph(projectData.value.graph_id)
 }
 
 onMounted(async () => {
-  addLog('SimulationView initialized')
-
-  // Check and stop running simulation (when user returns from Step 3)
+  addLog('SimulationView initialisiert')
   await checkAndStopRunningSimulation()
-
-  // Load simulation data
   loadSimulationData()
 })
 </script>
@@ -306,8 +244,6 @@ onMounted(async () => {
   overflow: hidden;
   font-family: 'Space Grotesk', 'Noto Sans SC', system-ui, sans-serif;
 }
-
-/* Header */
 .app-header {
   height: 60px;
   border-bottom: 1px solid #EAEAEA;
@@ -319,7 +255,6 @@ onMounted(async () => {
   z-index: 100;
   position: relative;
 }
-
 .brand {
   font-family: 'JetBrains Mono', monospace;
   font-weight: 800;
@@ -327,13 +262,11 @@ onMounted(async () => {
   letter-spacing: 1px;
   cursor: pointer;
 }
-
 .header-center {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
 }
-
 .view-switcher {
   display: flex;
   background: #F5F5F5;
@@ -341,7 +274,6 @@ onMounted(async () => {
   border-radius: 6px;
   gap: 4px;
 }
-
 .switch-btn {
   border: none;
   background: transparent;
@@ -353,43 +285,29 @@ onMounted(async () => {
   cursor: pointer;
   transition: all 0.2s;
 }
-
 .switch-btn.active {
   background: #FFF;
   color: #000;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
-
 .header-right {
   display: flex;
   align-items: center;
   gap: 16px;
 }
-
 .workflow-step {
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 14px;
 }
-
 .step-num {
   font-family: 'JetBrains Mono', monospace;
   font-weight: 700;
   color: #999;
 }
-
-.step-name {
-  font-weight: 700;
-  color: #000;
-}
-
-.step-divider {
-  width: 1px;
-  height: 14px;
-  background-color: #E0E0E0;
-}
-
+.step-name { font-weight: 700; color: #000; }
+.step-divider { width: 1px; height: 14px; background-color: #E0E0E0; }
 .status-indicator {
   display: flex;
   align-items: center;
@@ -398,37 +316,17 @@ onMounted(async () => {
   color: #666;
   font-weight: 500;
 }
-
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #CCC;
-}
-
+.dot { width: 8px; height: 8px; border-radius: 50%; background: #CCC; }
 .status-indicator.processing .dot { background: #FF5722; animation: pulse 1s infinite; }
 .status-indicator.completed .dot { background: #4CAF50; }
 .status-indicator.error .dot { background: #F44336; }
-
 @keyframes pulse { 50% { opacity: 0.5; } }
-
-/* Content */
-.content-area {
-  flex: 1;
-  display: flex;
-  position: relative;
-  overflow: hidden;
-}
-
+.content-area { flex: 1; display: flex; position: relative; overflow: hidden; }
 .panel-wrapper {
   height: 100%;
   overflow: hidden;
   transition: width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s ease, transform 0.3s ease;
   will-change: width, opacity, transform;
 }
-
-.panel-wrapper.left {
-  border-right: 1px solid #EAEAEA;
-}
+.panel-wrapper.left { border-right: 1px solid #EAEAEA; }
 </style>
-
