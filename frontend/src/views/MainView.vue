@@ -1,6 +1,6 @@
 <template>
   <div class="main-view">
-    <!-- Header -->
+    <!-- Kopfzeile -->
     <header class="app-header">
       <div class="header-left">
         <div class="brand" @click="router.push('/')">MIROFISH OFFLINE</div>
@@ -15,14 +15,14 @@
             :class="{ active: viewMode === mode }"
             @click="viewMode = mode"
           >
-            {{ { graph: 'Graph', split: 'Split', workbench: 'Workbench' }[mode] }}
+            {{ { graph: 'Graph', split: 'Geteilt', workbench: 'Arbeitsbereich' }[mode] }}
           </button>
         </div>
       </div>
 
       <div class="header-right">
         <div class="workflow-step">
-          <span class="step-num">Step {{ currentStep }}/5</span>
+          <span class="step-num">Schritt {{ currentStep }}/5</span>
           <span class="step-name">{{ stepNames[currentStep - 1] }}</span>
         </div>
         <div class="step-divider"></div>
@@ -33,9 +33,9 @@
       </div>
     </header>
 
-    <!-- Main Content Area -->
+    <!-- Hauptinhaltsbereich -->
     <main class="content-area">
-      <!-- Left Panel: Graph -->
+      <!-- Linkes Panel: Graph -->
       <div class="panel-wrapper left" :style="leftPanelStyle">
         <GraphPanel 
           :graphData="graphData"
@@ -46,9 +46,9 @@
         />
       </div>
 
-      <!-- Right Panel: Step Components -->
+      <!-- Rechtes Panel: Schritt-Komponenten -->
       <div class="panel-wrapper right" :style="rightPanelStyle">
-        <!-- Step 1: Graph Build -->
+        <!-- Schritt 1: Graph-Aufbau -->
         <Step1GraphBuild 
           v-if="currentStep === 1"
           :currentPhase="currentPhase"
@@ -59,7 +59,7 @@
           :systemLogs="systemLogs"
           @next-step="handleNextStep"
         />
-        <!-- Step 2: Env Setup -->
+        <!-- Schritt 2: Umgebungs-Setup -->
         <Step2EnvSetup
           v-else-if="currentStep === 2"
           :projectData="projectData"
@@ -86,30 +86,30 @@ import { getPendingUpload, clearPendingUpload } from '../store/pendingUpload'
 const route = useRoute()
 const router = useRouter()
 
-// Layout State
+// Layout-Zustand
 const viewMode = ref('split') // graph | split | workbench
 
-// Step State
-const currentStep = ref(1) // 1: Graph Build, 2: Env Setup, 3: Simulation, 4: Report, 5: Interaction
-const stepNames = ['Graph Build', 'Env Setup', 'Simulation', 'Report', 'Interaction']
+// Schritt-Zustand
+const currentStep = ref(1) // 1: Graph-Aufbau, 2: Umgebungs-Setup, 3: Simulation, 4: Bericht, 5: Interaktion
+const stepNames = ['Graph-Aufbau', 'Umgebungs-Setup', 'Simulation', 'Bericht', 'Interaktion']
 
-// Data State
+// Datenzustand
 const currentProjectId = ref(route.params.projectId)
 const loading = ref(false)
 const graphLoading = ref(false)
 const error = ref('')
 const projectData = ref(null)
 const graphData = ref(null)
-const currentPhase = ref(-1) // -1: Upload, 0: Ontology, 1: Build, 2: Complete
+const currentPhase = ref(-1) // -1: Upload, 0: Ontologie, 1: Aufbau, 2: Abgeschlossen
 const ontologyProgress = ref(null)
 const buildProgress = ref(null)
 const systemLogs = ref([])
 
-// Polling timers
+// Polling-Timer
 let pollTimer = null
 let graphPollTimer = null
 
-// --- Computed Layout Styles ---
+// --- Berechnete Layout-Stile ---
 const leftPanelStyle = computed(() => {
   if (viewMode.value === 'graph') return { width: '100%', opacity: 1, transform: 'translateX(0)' }
   if (viewMode.value === 'workbench') return { width: '0%', opacity: 0, transform: 'translateX(-20px)' }
@@ -122,7 +122,7 @@ const rightPanelStyle = computed(() => {
   return { width: '50%', opacity: 1, transform: 'translateX(0)' }
 })
 
-// --- Status Computed ---
+// --- Status berechnet ---
 const statusClass = computed(() => {
   if (error.value) return 'error'
   if (currentPhase.value >= 2) return 'completed'
@@ -130,24 +130,23 @@ const statusClass = computed(() => {
 })
 
 const statusText = computed(() => {
-  if (error.value) return 'Error'
-  if (currentPhase.value >= 2) return 'Ready'
-  if (currentPhase.value === 1) return 'Building Graph'
-  if (currentPhase.value === 0) return 'Generating Ontology'
-  return 'Initializing'
+  if (error.value) return 'Fehler'
+  if (currentPhase.value >= 2) return 'Bereit'
+  if (currentPhase.value === 1) return 'Graph wird aufgebaut'
+  if (currentPhase.value === 0) return 'Ontologie wird generiert'
+  return 'Initialisierung'
 })
 
-// --- Helpers ---
+// --- Hilfsfunktionen ---
 const addLog = (msg) => {
-  const time = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }) + '.' + new Date().getMilliseconds().toString().padStart(3, '0')
+  const time = new Date().toLocaleTimeString('de-DE', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }) + '.' + new Date().getMilliseconds().toString().padStart(3, '0')
   systemLogs.value.push({ time, msg })
-  // Keep last 100 logs
   if (systemLogs.value.length > 100) {
     systemLogs.value.shift()
   }
 }
 
-// --- Layout Methods ---
+// --- Layout-Methoden ---
 const toggleMaximize = (target) => {
   if (viewMode.value === target) {
     viewMode.value = 'split'
@@ -159,11 +158,9 @@ const toggleMaximize = (target) => {
 const handleNextStep = (params = {}) => {
   if (currentStep.value < 5) {
     currentStep.value++
-    addLog(`Entering Step ${currentStep.value}: ${stepNames[currentStep.value - 1]}`)
-
-    // If entering Step 3 from Step 2, log simulation round config
+    addLog(`Schritt ${currentStep.value} wird betreten: ${stepNames[currentStep.value - 1]}`)
     if (currentStep.value === 3 && params.maxRounds) {
-      addLog(`Custom simulation rounds: ${params.maxRounds}`)
+      addLog(`Benutzerdefinierte Simulationsrunden: ${params.maxRounds}`)
     }
   }
 }
@@ -171,14 +168,14 @@ const handleNextStep = (params = {}) => {
 const handleGoBack = () => {
   if (currentStep.value > 1) {
     currentStep.value--
-    addLog(`Back to Step ${currentStep.value}: ${stepNames[currentStep.value - 1]}`)
+    addLog(`Zurück zu Schritt ${currentStep.value}: ${stepNames[currentStep.value - 1]}`)
   }
 }
 
-// --- Data Logic ---
+// --- Daten-Logik ---
 
 const initProject = async () => {
-  addLog('Project view initialized.')
+  addLog('Projektansicht initialisiert.')
   if (currentProjectId.value === 'new') {
     await handleNewProject()
   } else {
@@ -189,16 +186,16 @@ const initProject = async () => {
 const handleNewProject = async () => {
   const pending = getPendingUpload()
   if (!pending.isPending || pending.files.length === 0) {
-    error.value = 'No pending files found.'
-    addLog('Error: No pending files found for new project.')
+    error.value = 'Keine ausstehenden Dateien gefunden.'
+    addLog('Fehler: Keine ausstehenden Dateien für neues Projekt gefunden.')
     return
   }
   
   try {
     loading.value = true
     currentPhase.value = 0
-    ontologyProgress.value = { message: 'Uploading and analyzing docs...' }
-    addLog('Starting ontology generation: Uploading files...')
+    ontologyProgress.value = { message: 'Dokumente werden hochgeladen und analysiert...' }
+    addLog('Ontologiegenerierung gestartet: Dateien werden hochgeladen...')
     
     const formData = new FormData()
     pending.files.forEach(f => formData.append('files', f))
@@ -212,15 +209,15 @@ const handleNewProject = async () => {
       
       router.replace({ name: 'Process', params: { projectId: res.data.project_id } })
       ontologyProgress.value = null
-      addLog(`Ontology generated successfully for project ${res.data.project_id}`)
+      addLog(`Ontologie erfolgreich generiert für Projekt ${res.data.project_id}`)
       await startBuildGraph()
     } else {
-      error.value = res.error || 'Ontology generation failed'
-      addLog(`Error generating ontology: ${error.value}`)
+      error.value = res.error || 'Ontologiegenerierung fehlgeschlagen'
+      addLog(`Fehler bei der Ontologiegenerierung: ${error.value}`)
     }
   } catch (err) {
     error.value = err.message
-    addLog(`Exception in handleNewProject: ${err.message}`)
+    addLog(`Ausnahme in handleNewProject: ${err.message}`)
   } finally {
     loading.value = false
   }
@@ -229,12 +226,12 @@ const handleNewProject = async () => {
 const loadProject = async () => {
   try {
     loading.value = true
-    addLog(`Loading project ${currentProjectId.value}...`)
+    addLog(`Projekt ${currentProjectId.value} wird geladen...`)
     const res = await getProject(currentProjectId.value)
     if (res.success) {
       projectData.value = res.data
       updatePhaseByStatus(res.data.status)
-      addLog(`Project loaded. Status: ${res.data.status}`)
+      addLog(`Projekt geladen. Status: ${res.data.status}`)
       
       if (res.data.status === 'ontology_generated' && !res.data.graph_id) {
         await startBuildGraph()
@@ -248,11 +245,11 @@ const loadProject = async () => {
       }
     } else {
       error.value = res.error
-      addLog(`Error loading project: ${res.error}`)
+      addLog(`Fehler beim Laden des Projekts: ${res.error}`)
     }
   } catch (err) {
     error.value = err.message
-    addLog(`Exception in loadProject: ${err.message}`)
+    addLog(`Ausnahme in loadProject: ${err.message}`)
   } finally {
     loading.value = false
   }
@@ -264,40 +261,39 @@ const updatePhaseByStatus = (status) => {
     case 'ontology_generated': currentPhase.value = 0; break;
     case 'graph_building': currentPhase.value = 1; break;
     case 'graph_completed': currentPhase.value = 2; break;
-    case 'failed': error.value = 'Project failed'; break;
+    case 'failed': error.value = 'Projekt fehlgeschlagen'; break;
   }
 }
 
 const startBuildGraph = async () => {
   try {
     currentPhase.value = 1
-    buildProgress.value = { progress: 0, message: 'Starting build...' }
-    addLog('Initiating graph build...')
+    buildProgress.value = { progress: 0, message: 'Aufbau wird gestartet...' }
+    addLog('Graph-Aufbau wird eingeleitet...')
     
     const res = await buildGraph({ project_id: currentProjectId.value })
     if (res.success) {
-      addLog(`Graph build task started. Task ID: ${res.data.task_id}`)
+      addLog(`Graph-Aufgabe gestartet. Aufgaben-ID: ${res.data.task_id}`)
       startGraphPolling()
       startPollingTask(res.data.task_id)
     } else {
       error.value = res.error
-      addLog(`Error starting build: ${res.error}`)
+      addLog(`Fehler beim Starten des Aufbaus: ${res.error}`)
     }
   } catch (err) {
     error.value = err.message
-    addLog(`Exception in startBuildGraph: ${err.message}`)
+    addLog(`Ausnahme in startBuildGraph: ${err.message}`)
   }
 }
 
 const startGraphPolling = () => {
-  addLog('Started polling for graph data...')
+  addLog('Graph-Daten-Polling gestartet...')
   fetchGraphData()
   graphPollTimer = setInterval(fetchGraphData, 10000)
 }
 
 const fetchGraphData = async () => {
   try {
-    // Refresh project info to check for graph_id
     const projRes = await getProject(currentProjectId.value)
     if (projRes.success && projRes.data.graph_id) {
       const gRes = await getGraphData(projRes.data.graph_id)
@@ -305,11 +301,11 @@ const fetchGraphData = async () => {
         graphData.value = gRes.data
         const nodeCount = gRes.data.node_count || gRes.data.nodes?.length || 0
         const edgeCount = gRes.data.edge_count || gRes.data.edges?.length || 0
-        addLog(`Graph data refreshed. Nodes: ${nodeCount}, Edges: ${edgeCount}`)
+        addLog(`Graph-Daten aktualisiert. Knoten: ${nodeCount}, Kanten: ${edgeCount}`)
       }
     }
   } catch (err) {
-    console.warn('Graph fetch error:', err)
+    console.warn('Graph-Abruffehler:', err)
   }
 }
 
@@ -324,7 +320,6 @@ const pollTaskStatus = async (taskId) => {
     if (res.success) {
       const task = res.data
       
-      // Log progress message if it changed
       if (task.message && task.message !== buildProgress.value?.message) {
         addLog(task.message)
       }
@@ -332,12 +327,11 @@ const pollTaskStatus = async (taskId) => {
       buildProgress.value = { progress: task.progress || 0, message: task.message }
       
       if (task.status === 'completed') {
-        addLog('Graph build task completed.')
+        addLog('Graph-Aufgabe abgeschlossen.')
         stopPolling()
-        stopGraphPolling() // Stop polling, do final load
+        stopGraphPolling()
         currentPhase.value = 2
         
-        // Final load
         const projRes = await getProject(currentProjectId.value)
         if (projRes.success && projRes.data.graph_id) {
             projectData.value = projRes.data
@@ -346,7 +340,7 @@ const pollTaskStatus = async (taskId) => {
       } else if (task.status === 'failed') {
         stopPolling()
         error.value = task.error
-        addLog(`Graph build task failed: ${task.error}`)
+        addLog(`Graph-Aufgabe fehlgeschlagen: ${task.error}`)
       }
     }
   } catch (e) {
@@ -356,17 +350,17 @@ const pollTaskStatus = async (taskId) => {
 
 const loadGraph = async (graphId) => {
   graphLoading.value = true
-  addLog(`Loading full graph data: ${graphId}`)
+  addLog(`Vollständige Graph-Daten werden geladen: ${graphId}`)
   try {
     const res = await getGraphData(graphId)
     if (res.success) {
       graphData.value = res.data
-      addLog('Graph data loaded successfully.')
+      addLog('Graph-Daten erfolgreich geladen.')
     } else {
-      addLog(`Failed to load graph data: ${res.error}`)
+      addLog(`Fehler beim Laden der Graph-Daten: ${res.error}`)
     }
   } catch (e) {
-    addLog(`Exception loading graph: ${e.message}`)
+    addLog(`Ausnahme beim Laden des Graphen: ${e.message}`)
   } finally {
     graphLoading.value = false
   }
@@ -374,7 +368,7 @@ const loadGraph = async (graphId) => {
 
 const refreshGraph = () => {
   if (projectData.value?.graph_id) {
-    addLog('Manual graph refresh triggered.')
+    addLog('Manuelles Graph-Aktualisieren ausgelöst.')
     loadGraph(projectData.value.graph_id)
   }
 }
@@ -390,7 +384,7 @@ const stopGraphPolling = () => {
   if (graphPollTimer) {
     clearInterval(graphPollTimer)
     graphPollTimer = null
-    addLog('Graph polling stopped.')
+    addLog('Graph-Polling gestoppt.')
   }
 }
 
@@ -414,7 +408,7 @@ onUnmounted(() => {
   font-family: 'Space Grotesk', 'Noto Sans SC', system-ui, sans-serif;
 }
 
-/* Header */
+/* Kopfzeile */
 .app-header {
   height: 60px;
   border-bottom: 1px solid #EAEAEA;
@@ -519,7 +513,7 @@ onUnmounted(() => {
 
 @keyframes pulse { 50% { opacity: 0.5; } }
 
-/* Content */
+/* Inhalt */
 .content-area {
   flex: 1;
   display: flex;
