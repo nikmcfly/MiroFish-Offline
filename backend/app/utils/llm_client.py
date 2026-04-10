@@ -9,6 +9,7 @@ import os
 import re
 from typing import Optional, Dict, Any, List
 from openai import OpenAI
+import requests
 
 from ..config import Config
 
@@ -43,6 +44,39 @@ class LLMClient:
     def _is_ollama(self) -> bool:
         """Check if we're talking to an Ollama server."""
         return '11434' in (self.base_url or '')
+
+    def _ollama_native_base(self) -> str:
+        """Return the Ollama host base URL (strips /v1 suffix)."""
+        base = (self.base_url or '').rstrip('/')
+        if base.endswith('/v1'):
+            base = base[:-3]
+        return base
+
+    def _chat_via_ollama_native(
+        self,
+        messages: List[Dict[str, str]],
+        temperature: float,
+    ) -> str:
+        """
+        Fallback: call Ollama's native /api/chat endpoint.
+
+        Used when the OpenAI-compatible endpoint returns empty content for
+        thinking-mode models (e.g. Gemma 4) whose <|think|> tokens consume
+        the max_tokens budget before any visible content is produced.
+        """
+        url = f"{self._ollama_native_base()}/api/chat"
+        payload: Dict[str, Any] = {
+            "model": self.model,
+            "messages": messages,
+            "stream": False,
+            "options": {
+                "temperature": temperature,
+                "num_ctx": self._num_ctx,
+            },
+        }
+        resp = requests.post(url, json=payload, timeout=300)
+        resp.raise_for_status()
+        return resp.json()["message"]["content"]
 
     def chat(
         self,
@@ -81,8 +115,16 @@ class LLMClient:
 
         response = self.client.chat.completions.create(**kwargs)
         content = response.choices[0].message.content
+
+        # Thinking-mode models (e.g. Gemma 4) can exhaust max_tokens on internal
+        # reasoning tokens, causing Ollama's OpenAI-compat layer to return empty
+        # content.  Fall back to the native /api/chat endpoint which surfaces the
+        # visible response correctly.
+        if not content and self._is_ollama():
+            content = self._chat_via_ollama_native(messages, temperature)
+
         # Some models (like MiniMax M2.5) include <think>thinking content in response, need to remove
-        content = re.sub(r'<think>[\s\S]*?</think>', '', content).strip()
+        content = re.sub(r'<think>[\s\S]*?</think>', '', content or '').strip()
         return content
 
     def chat_json(
