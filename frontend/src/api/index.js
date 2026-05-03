@@ -46,6 +46,11 @@ service.interceptors.response.use(
       console.error('Network error - please check your connection')
     }
 
+    // Extract backend error message if available
+    if (error.response && error.response.data && error.response.data.error) {
+      error.message = error.response.data.error
+    }
+
     return Promise.reject(error)
   }
 )

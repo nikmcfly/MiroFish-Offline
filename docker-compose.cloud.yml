@@ -1,0 +1,21 @@
+# Cloud LLM override — use OpenRouter or any OpenAI-compatible API instead of local Ollama
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.cloud.yml up -d
+#
+# This disables the Ollama container. Configure your cloud LLM provider in .env:
+#
+#   LLM_API_KEY=sk-or-v1-your-key-here
+#   LLM_BASE_URL=https://openrouter.ai/api/v1
+#   LLM_MODEL_NAME=moonshotai/kimi-k2.6
+#
+#   EMBEDDING_MODEL=qwen/qwen3-embedding-8b
+#   EMBEDDING_BASE_URL=https://openrouter.ai/api/v1
+#
+# Neo4j still runs locally in Docker. Update NEO4J_URI in .env:
+#   NEO4J_URI=bolt://neo4j:7687
+
+services:
+  ollama:
+    profiles:
+      - _  # Prevents ollama from starting (profile "_" is never activated)

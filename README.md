@@ -4,7 +4,7 @@
 
 # MiroFish-Offline
 
-**Fully local fork of [MiroFish](https://github.com/666ghj/MiroFish) — no cloud APIs required. English UI.**
+**Fully local fork of [MiroFish](https://github.com/666ghj/MiroFish) — no cloud APIs required (Cloud optional for offloading inference). English UI.**
 
 *A multi-agent swarm intelligence engine that simulates public opinion, market sentiment, and social dynamics. Entirely on your hardware.*
 
@@ -25,9 +25,9 @@ The [original MiroFish](https://github.com/666ghj/MiroFish) was built for the Ch
 |---|---|
 | Chinese UI | **English UI** (1,000+ strings translated) |
 | Zep Cloud (graph memory) | **Neo4j Community Edition 5.15** |
-| DashScope / OpenAI API (LLM) | **Ollama** (qwen2.5, llama3, etc.) |
-| Zep Cloud embeddings | **nomic-embed-text** via Ollama |
-| Cloud API keys required | **Zero cloud dependencies** |
+| DashScope / OpenAI API (LLM) | **Ollama** (qwen2.5, llama3, etc.) **OR any OpenAI-compatible API** |
+| Zep Cloud embeddings | **nomic-embed-text** via Ollama **OR any OpenAI-compatible embeddings** |
+| Cloud API keys required | **Zero cloud dependencies (Cloud optional)** |
 
 ## Workflow
 
@@ -67,9 +67,44 @@ docker exec mirofish-ollama ollama pull nomic-embed-text
 
 Open `http://localhost:3000` — that's it.
 
-### Option B: Manual
+### Option B: Cloud Mode (OpenRouter / OpenAI)
 
-**1. Start Neo4j**
+If you have limited local hardware, you can run the simulation using cloud APIs (like OpenRouter or OpenAI) while keeping the graph memory local.
+
+1. **Configure `.env`**:
+   Uncomment the Cloud section in your `.env` and add your API keys:
+   ```bash
+   LLM_API_KEY=your_openrouter_key
+   LLM_BASE_URL=https://openrouter.ai/api/v1
+   LLM_MODEL_NAME=moonshotai/kimi-k2.6
+   EMBEDDING_BASE_URL=https://openrouter.ai/api/v1
+   EMBEDDING_MODEL=qwen/qwen3-embedding-8b
+   ```
+
+   ```bash
+   docker compose -f docker-compose.yml -f docker-compose.cloud.yml up -d
+   ```
+
+### Option C: Hybrid Routing (Performance & Cost Optimized)
+
+This is the recommended setup for serious research. It splits the workload between two models:
+1. **Agent Reasoning** (Smart): Frontier model for complex behavior (e.g., Kimi K2.6, GPT-4o).
+2. **Graph Extraction** (Cheap): High-throughput model for entity parsing (e.g., Gemini Flash).
+
+**Configure in `.env`**:
+```bash
+# Agent Reasoning (Kimi)
+LLM_MODEL_NAME=moonshotai/kimi-k2.6
+
+# Background Extraction (Flash)
+GRAPH_LLM_MODEL_NAME=google/gemini-3-flash-preview
+GRAPH_LLM_API_KEY=your_key
+GRAPH_LLM_BASE_URL=https://openrouter.ai/api/v1
+```
+
+### Option D: Manual Installation
+
+If you prefer to run services individually:
 
 ```bash
 docker run -d --name neo4j \
@@ -107,27 +142,42 @@ npm run dev
 
 Open `http://localhost:3000`.
 
-## Configuration
+## Configuration Reference
 
-All settings are in `.env` (copy from `.env.example`):
+MiroFish uses a tiered configuration system. Copy `.env.example` to `.env` to get started.
 
-```bash
-# LLM — points to local Ollama (OpenAI-compatible API)
-LLM_API_KEY=ollama
-LLM_BASE_URL=http://localhost:11434/v1
-LLM_MODEL_NAME=qwen2.5:32b
+### 1. Agent Reasoning (The "Brains")
+These variables control the primary LLM used by agents for behavior, reports, and simulated interactions.
 
-# Neo4j
-NEO4J_URI=bolt://localhost:7687
-NEO4J_USER=neo4j
-NEO4J_PASSWORD=mirofish
+| Variable | Default (Local) | Recommended (Cloud) |
+|---|---|---|
+| `LLM_MODEL_NAME` | `qwen2.5:32b` | `moonshotai/kimi-k2.6` |
+| `LLM_BASE_URL` | `http://localhost:11434/v1` | `https://openrouter.ai/api/v1` |
+| `LLM_API_KEY` | `ollama` | `sk-or-v1-...` |
 
-# Embeddings
-EMBEDDING_MODEL=nomic-embed-text
-EMBEDDING_BASE_URL=http://localhost:11434
-```
+### 2. Graph Extraction (The "Worker")
+Optional. Controls the background process that parses documents into the knowledge graph. **If not set, it defaults to the Agent Reasoning settings above.**
 
-Works with any OpenAI-compatible API — swap Ollama for Claude, GPT, or any other provider by changing `LLM_BASE_URL` and `LLM_API_KEY`.
+| Variable | Use Case | Recommended |
+|---|---|---|
+| `GRAPH_LLM_MODEL_NAME` | NER / Ontology | `google/gemini-3-flash-preview` |
+| `GRAPH_LLM_API_KEY` | API Auth | (Your OpenRouter Key) |
+| `GRAPH_LLM_BASE_URL` | API Endpoint | `https://openrouter.ai/api/v1` |
+
+### 3. Embeddings
+Used for vector search and long-term memory retrieval.
+
+| Variable | Local | Cloud |
+|---|---|---|
+| `EMBEDDING_MODEL` | `nomic-embed-text` | `qwen/qwen3-embedding-8b` |
+| `EMBEDDING_BASE_URL`| `http://localhost:11434`| `https://openrouter.ai/api/v1`|
+
+### 4. Database (Neo4j)
+| Variable | Default | Description |
+|---|---|---|
+| `NEO4J_URI` | `bolt://localhost:7687` | Use `bolt://neo4j:7687` for Docker |
+| `NEO4J_USER` | `neo4j` | Default user |
+| `NEO4J_PASSWORD` | `mirofish` | Set during initialization |
 
 ## Architecture
 
@@ -152,7 +202,7 @@ This fork introduces a clean abstraction layer between the application and the g
 │    │   Neo4jStorage     │                │
 │    │  ┌───────────────┐ │                │
 │    │  │ EmbeddingService│ ← Ollama       │
-│    │  │ NERExtractor   │ ← Ollama LLM   │
+│    │  │ NERExtractor   │ ← Extraction LLM│
 │    │  │ SearchService  │ ← Hybrid search │
 │    │  └───────────────┘ │                │
 │    └───────────────────┘                │
@@ -174,14 +224,17 @@ This fork introduces a clean abstraction layer between the application and the g
 
 ## Hardware Requirements
 
-| Component | Minimum | Recommended |
-|---|---|---|
-| RAM | 16 GB | 32 GB |
-| VRAM (GPU) | 10 GB (14b model) | 24 GB (32b model) |
-| Disk | 20 GB | 50 GB |
-| CPU | 4 cores | 8+ cores |
+| Component | Minimum (Local) | Recommended (Local) | Cloud Mode |
+|---|---|---|---|
+| **RAM** | 16 GB | 32 GB | 8 GB |
+| **VRAM (GPU)** | 10 GB (14b model) | 24 GB (32b model) | **0 GB** |
+| **Disk** | 20 GB | 50 GB | 10 GB |
+| **CPU** | 4 cores | 8+ cores | 2+ cores |
 
-CPU-only mode works but is significantly slower for LLM inference. For lighter setups, use `qwen2.5:14b` or `qwen2.5:7b`.
+> [!NOTE]
+> **Cloud Mode** offloads all LLM inference and embeddings to external providers. This is the recommended way to run MiroFish on laptops or hardware without a dedicated NVIDIA GPU. **Hybrid Routing** still benefits from 0 GB VRAM requirements as long as both Reasoning and Extraction models are offloaded.
+
+CPU-only mode for local LLMs is possible but not recommended for simulations with >50 agents due to extreme latency.
 
 ## Use Cases
 

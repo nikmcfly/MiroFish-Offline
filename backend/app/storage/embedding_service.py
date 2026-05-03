@@ -1,14 +1,14 @@
 """
-EmbeddingService — local embedding via Ollama API
+EmbeddingService — embedding via Ollama or OpenAI-compatible API
 
-Replaces Zep Cloud's built-in embedding with local nomic-embed-text model.
-Uses Ollama's /api/embed endpoint for vector generation (768 dimensions).
+Supports two modes (auto-detected from EMBEDDING_BASE_URL):
+  - Ollama:  /api/embed endpoint, no auth needed
+  - OpenAI:  /v1/embeddings endpoint, Bearer token auth (OpenRouter, OpenAI, etc.)
 """
 
 import time
 import logging
 from typing import List, Optional
-from functools import lru_cache
 
 import requests
 
@@ -18,20 +18,30 @@ logger = logging.getLogger('mirofish.embedding')
 
 
 class EmbeddingService:
-    """Generate embeddings using local Ollama server."""
+    """Generate embeddings using Ollama or any OpenAI-compatible API."""
 
     def __init__(
         self,
         model: Optional[str] = None,
         base_url: Optional[str] = None,
+        api_key: Optional[str] = None,
         max_retries: int = 3,
         timeout: int = 30,
     ):
         self.model = model or Config.EMBEDDING_MODEL
         self.base_url = (base_url or Config.EMBEDDING_BASE_URL).rstrip('/')
+        self.api_key = api_key or getattr(Config, 'EMBEDDING_API_KEY', None)
         self.max_retries = max_retries
         self.timeout = timeout
-        self._embed_url = f"{self.base_url}/api/embed"
+
+        # Auto-detect mode: Ollama (port 11434) vs OpenAI-compatible
+        self._is_ollama_mode = ':11434' in self.base_url
+        if self._is_ollama_mode:
+            self._embed_url = f"{self.base_url}/api/embed"
+            logger.info(f"Embedding mode: Ollama ({self._embed_url})")
+        else:
+            self._embed_url = f"{self.base_url}/embeddings"
+            logger.info(f"Embedding mode: OpenAI-compatible ({self._embed_url})")
 
         # Simple in-memory cache (text -> embedding vector)
         # Using dict instead of lru_cache because lists aren't hashable
@@ -46,10 +56,10 @@ class EmbeddingService:
             text: Input text to embed
 
         Returns:
-            768-dimensional float vector
+            Float vector (dimensions depend on model)
 
         Raises:
-            EmbeddingError: If Ollama request fails after retries
+            EmbeddingError: If request fails after retries
         """
         if not text or not text.strip():
             raise EmbeddingError("Cannot embed empty text")
@@ -72,7 +82,7 @@ class EmbeddingService:
         """
         Generate embeddings for multiple texts.
 
-        Processes in batches to avoid overwhelming Ollama.
+        Processes in batches to avoid overwhelming the embedding API.
 
         Args:
             texts: List of input texts
@@ -97,8 +107,9 @@ class EmbeddingService:
                 uncached_indices.append(i)
                 uncached_texts.append(text)
             else:
-                # Empty text — zero vector
-                results[i] = [0.0] * 768
+                # Empty text — zero vector (use first cached vector length, or default 768)
+                dim = len(next(iter(self._cache.values()))) if self._cache else 768
+                results[i] = [0.0] * dim
 
         # Batch-embed uncached texts
         if uncached_texts:
@@ -116,6 +127,21 @@ class EmbeddingService:
         return results  # type: ignore
 
     def _request_embeddings(self, texts: List[str]) -> List[List[float]]:
+        """
+        Route embedding request to the appropriate backend.
+
+        Args:
+            texts: List of texts to embed
+
+        Returns:
+            List of embedding vectors
+        """
+        if self._is_ollama_mode:
+            return self._request_ollama(texts)
+        else:
+            return self._request_openai(texts)
+
+    def _request_ollama(self, texts: List[str]) -> List[List[float]]:
         """
         Make HTTP request to Ollama /api/embed endpoint with retry.
 
@@ -181,6 +207,85 @@ class EmbeddingService:
             f"Ollama embedding failed after {self.max_retries} retries: {last_error}"
         )
 
+    def _request_openai(self, texts: List[str]) -> List[List[float]]:
+        """
+        Make HTTP request to OpenAI-compatible /v1/embeddings endpoint with retry.
+
+        Works with OpenRouter, OpenAI, Azure, and any provider that implements
+        the OpenAI embeddings API format.
+
+        Args:
+            texts: List of texts to embed
+
+        Returns:
+            List of embedding vectors
+        """
+        payload = {
+            "model": self.model,
+            "input": texts,
+        }
+
+        headers = {
+            "Content-Type": "application/json",
+        }
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+
+        last_error = None
+        for attempt in range(self.max_retries):
+            try:
+                response = requests.post(
+                    self._embed_url,
+                    json=payload,
+                    headers=headers,
+                    timeout=self.timeout,
+                )
+                response.raise_for_status()
+                data = response.json()
+
+                # OpenAI format: {"data": [{"embedding": [...], "index": 0}, ...]}
+                embedding_data = data.get("data", [])
+                if len(embedding_data) != len(texts):
+                    raise EmbeddingError(
+                        f"Expected {len(texts)} embeddings, got {len(embedding_data)}"
+                    )
+
+                # Sort by index to ensure correct order
+                embedding_data.sort(key=lambda x: x.get("index", 0))
+                return [item["embedding"] for item in embedding_data]
+
+            except requests.exceptions.ConnectionError as e:
+                last_error = e
+                logger.warning(
+                    f"Embedding API connection failed (attempt {attempt + 1}/{self.max_retries}): {e}"
+                )
+            except requests.exceptions.Timeout as e:
+                last_error = e
+                logger.warning(
+                    f"Embedding API timed out (attempt {attempt + 1}/{self.max_retries})"
+                )
+            except requests.exceptions.HTTPError as e:
+                last_error = e
+                logger.error(
+                    f"Embedding API HTTP error: {e.response.status_code} - {e.response.text}"
+                )
+                if e.response.status_code >= 500:
+                    pass  # Server error — retry
+                else:
+                    raise EmbeddingError(f"Embedding API failed: {e}") from e
+            except (KeyError, ValueError, TypeError) as e:
+                raise EmbeddingError(f"Invalid embedding API response: {e}") from e
+
+            # Exponential backoff
+            if attempt < self.max_retries - 1:
+                wait = 2 ** attempt
+                logger.info(f"Retrying in {wait}s...")
+                time.sleep(wait)
+
+        raise EmbeddingError(
+            f"Embedding API failed after {self.max_retries} retries: {last_error}"
+        )
+
     def _cache_put(self, text: str, vector: List[float]) -> None:
         """Add to cache, evicting oldest entries if full."""
         if len(self._cache) >= self._cache_max_size:
@@ -191,7 +296,7 @@ class EmbeddingService:
         self._cache[text] = vector
 
     def health_check(self) -> bool:
-        """Check if Ollama embedding endpoint is reachable."""
+        """Check if embedding endpoint is reachable."""
         try:
             vec = self.embed("health check")
             return len(vec) > 0

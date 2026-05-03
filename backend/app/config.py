@@ -40,6 +40,14 @@ class Config:
     # Embedding configuration
     EMBEDDING_MODEL = os.environ.get('EMBEDDING_MODEL', 'nomic-embed-text')
     EMBEDDING_BASE_URL = os.environ.get('EMBEDDING_BASE_URL', 'http://localhost:11434')
+    EMBEDDING_API_KEY = os.environ.get('EMBEDDING_API_KEY', os.environ.get('LLM_API_KEY'))
+
+    # Graph Extraction LLM configuration (separate routing for NER/ontology)
+    # Uses a cheap, fast model for high-volume text processing.
+    # Falls back to primary LLM_* if not set.
+    GRAPH_LLM_API_KEY = os.environ.get('GRAPH_LLM_API_KEY', os.environ.get('LLM_API_KEY'))
+    GRAPH_LLM_BASE_URL = os.environ.get('GRAPH_LLM_BASE_URL', os.environ.get('LLM_BASE_URL', 'http://localhost:11434/v1'))
+    GRAPH_LLM_MODEL_NAME = os.environ.get('GRAPH_LLM_MODEL_NAME', os.environ.get('LLM_MODEL_NAME', 'qwen2.5:32b'))
 
     # File upload configuration
     MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50MB
