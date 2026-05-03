@@ -17,6 +17,7 @@ services:
         condition: service_healthy
       ollama:
         condition: service_started
+        required: false  # App starts without Ollama when using cloud LLM override
 
   neo4j:
     image: neo4j:5.18-community

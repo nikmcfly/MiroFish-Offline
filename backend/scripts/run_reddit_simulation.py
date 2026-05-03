@@ -461,9 +461,18 @@ class RedditSimulationRunner:
         
         print(f"LLM configuration: model={llm_model}, base_url={llm_base_url[:40] if llm_base_url else 'default'}...")
         
+        # Auto-detect platform: OpenAI vs OpenAI-compatible (OpenRouter, Ollama, etc.)
+        if llm_base_url and 'api.openai.com' not in llm_base_url:
+            platform = ModelPlatformType.OPENAI_COMPATIBLE_MODEL
+            extra_kwargs = {"url": llm_base_url, "api_key": llm_api_key}
+        else:
+            platform = ModelPlatformType.OPENAI
+            extra_kwargs = {}
+        
         return ModelFactory.create(
-            model_platform=ModelPlatformType.OPENAI,
+            model_platform=platform,
             model_type=llm_model,
+            **extra_kwargs,
         )
     
     def _get_active_agents_for_round(
