@@ -80,7 +80,7 @@
 }
 
 .orange-tag {
-  background: #FF4500;
+  background: var(--brand-accent);
   color: #FFFFFF;
   padding: 4px 10px;
   font-weight: 700;
@@ -130,7 +130,7 @@
 }
 
 .highlight-orange {
-  color: #FF4500;
+  color: var(--brand-accent);
   font-weight: 700;
   font-family: 'JetBrains Mono', monospace;
 }
@@ -150,13 +150,13 @@
   font-weight: 520;
   color: #000000;
   letter-spacing: 1px;
-  border-left: 3px solid #FF4500;
+  border-left: 3px solid var(--brand-accent);
   padding-left: 15px;
   margin-top: 20px;
 }
 
 .blinking-cursor {
-  color: #FF4500;
+  color: var(--brand-accent);
   animation: blink 1s step-end infinite;
   font-weight: 700;
 }
@@ -169,7 +169,7 @@
 .decoration-square {
   width: 16px;
   height: 16px;
-  background: #FF4500;
+  background: var(--brand-accent);
 }
 
 .hero-right {
@@ -201,13 +201,13 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #FF4500;
+  color: var(--brand-accent);
   font-size: 1.2rem;
   transition: all 0.2s;
 }
 
 .scroll-down-btn:hover {
-  border-color: #FF4500;
+  border-color: var(--brand-accent);
 }
 
 /* Dashboard Two-Column Layout */
@@ -241,7 +241,7 @@
 }
 
 .status-dot {
-  color: #FF4500;
+  color: var(--brand-accent);
   font-size: 0.8rem;
 }
 
@@ -520,8 +520,8 @@
 }
 
 .start-engine-btn:hover:not(:disabled) {
-  background: #FF4500;
-  border-color: #FF4500;
+  background: var(--brand-accent);
+  border-color: var(--brand-accent);
   transform: translateY(-2px);
 }
 

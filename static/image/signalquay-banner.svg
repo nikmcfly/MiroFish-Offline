@@ -1,0 +1,17 @@
+<svg width="1440" height="420" viewBox="0 0 1440 420" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">SignalQuay Simulation Intelligence</title>
+  <desc id="desc">Dark SignalQuay banner with signal wave icon and simulation engine tagline</desc>
+  <rect width="1440" height="420" fill="#0A0E14"/>
+  <circle cx="1160" cy="120" r="220" fill="#0EA5E9" fill-opacity="0.15"/>
+  <circle cx="1260" cy="320" r="160" fill="#0284C7" fill-opacity="0.18"/>
+  <g transform="translate(120 100)">
+    <path d="M88 0L176 51V153L88 204L0 153V51L88 0Z" fill="#0EA5E9"/>
+    <path d="M88 32L145 65V139L88 172L31 139V65L88 32Z" fill="#0A0E14"/>
+    <path d="M52 108C69 87 107 87 124 108" stroke="#F8FAFC" stroke-width="13" stroke-linecap="round"/>
+    <path d="M32 82C62 47 114 47 144 82" stroke="#F8FAFC" stroke-width="13" stroke-linecap="round" opacity="0.72"/>
+    <circle cx="88" cy="130" r="12" fill="#F8FAFC"/>
+  </g>
+  <text x="350" y="178" fill="#F8FAFC" font-family="Space Grotesk, Arial, sans-serif" font-size="76" font-weight="700" letter-spacing="-2">SignalQuay</text>
+  <text x="354" y="232" fill="#94A3B8" font-family="JetBrains Mono, Consolas, monospace" font-size="24" font-weight="500" letter-spacing="4">SIMULATION INTELLIGENCE</text>
+  <text x="354" y="286" fill="#CBD5E1" font-family="Space Grotesk, Arial, sans-serif" font-size="30" font-weight="400">White-labeled multi-agent forecasting powered by local graph memory.</text>
+</svg>

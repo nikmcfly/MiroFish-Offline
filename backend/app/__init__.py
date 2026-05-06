@@ -36,7 +36,7 @@ def create_app(config_class=Config):
 
     if should_log_startup:
         logger.info("=" * 50)
-        logger.info("MiroFish-Offline Backend starting...")
+    logger.info("SignalQuay backend starting...")
         logger.info("=" * 50)
 
     # Enable CORS
@@ -83,10 +83,10 @@ def create_app(config_class=Config):
     # Health check
     @app.route('/health')
     def health():
-        return {'status': 'ok', 'service': 'MiroFish-Offline Backend'}
+        return {'status': 'ok', 'service': 'SignalQuay Backend'}
 
     if should_log_startup:
-        logger.info("MiroFish-Offline Backend startup complete")
+        logger.info("SignalQuay backend startup complete")
 
     return app
 

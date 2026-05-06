@@ -285,8 +285,8 @@ const toggleSelfLoop = (id) => {
 const entityTypes = computed(() => {
   if (!props.graphData?.nodes) return []
   const typeMap = {}
-  // Beautiful color palette
-  const colors = ['#FF6B35', '#004E89', '#7B2D8E', '#1A936F', '#C5283D', '#E9724C', '#3498db', '#9b59b6', '#27ae60', '#f39c12']
+  const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--brand-accent').trim() || '#0EA5E9'
+  const colors = [accentColor, '#004E89', '#7B2D8E', '#1A936F', '#C5283D', '#E9724C', '#3498db', '#9b59b6', '#27ae60', '#f39c12']
   
   props.graphData.nodes.forEach(node => {
     const type = node.labels?.find(l => l !== 'Entity') || 'Entity'

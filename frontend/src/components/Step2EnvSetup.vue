@@ -375,7 +375,7 @@
                   <path d="M16.24 7.76L14.12 14.12L7.76 16.24L9.88 9.88L16.24 7.76Z" fill="url(#paint0_linear)" stroke="url(#paint0_linear)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                   <defs>
                     <linearGradient id="paint0_linear" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
-                      <stop stop-color="#FF5722"/>
+                      <stop stop-color="var(--brand-accent)"/>
                       <stop offset="1" stop-color="#FF9800"/>
                     </linearGradient>
                   </defs>
@@ -440,7 +440,7 @@
             <div class="rounds-header">
               <div class="header-left">
                 <span class="section-title">Simulation Rounds Setting</span>
-                <span class="section-desc">MiroFish Automatically plan and infer reality <span class="desc-highlight">{{ simulationConfig?.time_config?.total_simulation_hours || '-' }}</span> hours，Each round represents reality <span class="desc-highlight">{{ simulationConfig?.time_config?.minutes_per_round || '-' }}</span> minutes time elapsed</span>
+                <span class="section-desc">SignalQuay automatically plans and infers reality over <span class="desc-highlight">{{ simulationConfig?.time_config?.total_simulation_hours || '-' }}</span> hours, with each round representing <span class="desc-highlight">{{ simulationConfig?.time_config?.minutes_per_round || '-' }}</span> minutes of elapsed time.</span>
               </div>
               <label class="switch-control">
                 <input type="checkbox" v-model="useCustomRounds">
@@ -1110,7 +1110,7 @@ onUnmounted(() => {
 }
 
 .step-card.active {
-  border-color: #FF5722;
+  border-color: var(--brand-accent);
   box-shadow: 0 4px 12px rgba(255, 87, 34, 0.08);
 }
 
@@ -1154,7 +1154,7 @@ onUnmounted(() => {
 }
 
 .badge.success { background: #E8F5E9; color: #2E7D32; }
-.badge.processing { background: #FF5722; color: #FFF; }
+.badge.processing { background: var(--brand-accent); color: #FFF; }
 .badge.pending { background: #F5F5F5; color: #999; }
 .badge.accent { background: #E3F2FD; color: #1565C0; }
 
@@ -1935,7 +1935,7 @@ onUnmounted(() => {
 
 .info-value.mbti {
   font-family: 'JetBrains Mono', monospace;
-  color: #FF5722;
+  color: var(--brand-accent);
 }
 
 /* Module area */
@@ -2108,7 +2108,7 @@ onUnmounted(() => {
   width: 16px;
   height: 16px;
   border: 2px solid #E5E5E5;
-  border-top-color: #FF5722;
+  border-top-color: var(--brand-accent);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }

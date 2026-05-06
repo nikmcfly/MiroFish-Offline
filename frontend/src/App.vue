@@ -7,6 +7,16 @@
 </script>
 
 <style>
+:root {
+  --brand-accent: #0EA5E9;
+  --brand-accent-strong: #0284C7;
+  --brand-bg: #0A0E14;
+  --brand-fg: #F8FAFC;
+  --brand-muted: #64748B;
+  --font-display: 'Space Grotesk', 'Noto Sans SC', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
 /* Global style reset */
 * {
   margin: 0;
@@ -15,7 +25,7 @@
 }
 
 #app {
-  font-family: 'JetBrains Mono', 'Space Grotesk', 'Noto Sans SC', monospace;
+  font-family: var(--font-mono);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: #000000;
@@ -48,7 +58,7 @@ button {
 .home-container {
   min-height: 100vh;
   background: #FFFFFF;
-  font-family: 'Space Grotesk', 'Noto Sans SC', system-ui, sans-serif;
+  font-family: var(--font-display);
   color: #000000;
 }
 
@@ -122,7 +132,7 @@ button {
 }
 
 .orange-tag {
-  background: #FF4500;
+  background: var(--brand-accent);
   color: #FFFFFF;
   padding: 4px 10px;
   font-weight: 700;
@@ -172,7 +182,7 @@ button {
 }
 
 .highlight-orange {
-  color: #FF4500;
+  color: var(--brand-accent);
   font-weight: 700;
   font-family: 'JetBrains Mono', monospace;
 }
@@ -192,13 +202,13 @@ button {
   font-weight: 520;
   color: #000000;
   letter-spacing: 1px;
-  border-left: 3px solid #FF4500;
+  border-left: 3px solid var(--brand-accent);
   padding-left: 15px;
   margin-top: 20px;
 }
 
 .blinking-cursor {
-  color: #FF4500;
+  color: var(--brand-accent);
   animation: blink 1s step-end infinite;
   font-weight: 700;
 }
@@ -211,7 +221,7 @@ button {
 .decoration-square {
   width: 16px;
   height: 16px;
-  background: #FF4500;
+  background: var(--brand-accent);
 }
 
 .hero-right {
@@ -243,13 +253,13 @@ button {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #FF4500;
+  color: var(--brand-accent);
   font-size: 1.2rem;
   transition: all 0.2s;
 }
 
 .scroll-down-btn:hover {
-  border-color: #FF4500;
+  border-color: var(--brand-accent);
 }
 
 .dashboard-section {
@@ -281,7 +291,7 @@ button {
 }
 
 .status-dot {
-  color: #FF4500;
+  color: var(--brand-accent);
   font-size: 0.8rem;
 }
 
@@ -557,8 +567,8 @@ button {
 }
 
 .start-engine-btn:hover:not(:disabled) {
-  background: #FF4500;
-  border-color: #FF4500;
+  background: var(--brand-accent);
+  border-color: var(--brand-accent);
   transform: translateY(-2px);
 }
 

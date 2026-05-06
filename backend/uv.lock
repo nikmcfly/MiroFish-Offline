@@ -1238,7 +1238,7 @@ wheels = [
 ]
 
 [[package]]
-name = "mirofish-backend"
+name = "signalquay-sim-engine-backend"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

@@ -1,7 +1,7 @@
 {
-  "name": "mirofish-offline",
+  "name": "signalquay-sim-engine",
   "version": "0.2.0",
-  "description": "MiroFish-Offline — local-first swarm intelligence engine (Neo4j + Ollama)",
+  "description": "SignalQuay — local-first multi-agent simulation engine (Neo4j + Ollama)",
   "scripts": {
     "setup": "npm install && cd frontend && npm install",
     "setup:backend": "cd backend && uv sync",

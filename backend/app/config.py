@@ -7,7 +7,7 @@ import os
 from dotenv import load_dotenv
 
 # Load .env file from project root
-# Path: MiroFish/.env (relative to backend/app/config.py)
+# Path: repository .env (relative to backend/app/config.py)
 project_root_env = os.path.join(os.path.dirname(__file__), '../../.env')
 
 if os.path.exists(project_root_env):
@@ -21,7 +21,7 @@ class Config:
     """Flask configuration class"""
 
     # Flask configuration
-    SECRET_KEY = os.environ.get('SECRET_KEY', 'mirofish-secret-key')
+    SECRET_KEY = os.environ.get('SECRET_KEY', 'signalquay-secret-key')
     DEBUG = os.environ.get('FLASK_DEBUG', 'True').lower() == 'true'
 
     # JSON configuration - disable ASCII escaping to display Chinese directly (not as \uXXXX)
@@ -35,7 +35,7 @@ class Config:
     # Neo4j configuration
     NEO4J_URI = os.environ.get('NEO4J_URI', 'bolt://localhost:7687')
     NEO4J_USER = os.environ.get('NEO4J_USER', 'neo4j')
-    NEO4J_PASSWORD = os.environ.get('NEO4J_PASSWORD', 'mirofish')
+    NEO4J_PASSWORD = os.environ.get('NEO4J_PASSWORD', 'signalquay')
 
     # Embedding configuration
     EMBEDDING_MODEL = os.environ.get('EMBEDDING_MODEL', 'nomic-embed-text')

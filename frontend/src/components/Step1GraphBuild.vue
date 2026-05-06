@@ -300,7 +300,7 @@ watch(() => props.systemLogs.length, () => {
 }
 
 .step-card.active {
-  border-color: #FF5722;
+  border-color: var(--brand-accent);
   box-shadow: 0 4px 12px rgba(255, 87, 34, 0.08);
 }
 
@@ -344,8 +344,8 @@ watch(() => props.systemLogs.length, () => {
 }
 
 .badge.success { background: #E8F5E9; color: #2E7D32; }
-.badge.processing { background: #FF5722; color: #FFF; }
-.badge.accent { background: #FF5722; color: #FFF; }
+.badge.processing { background: var(--brand-accent); color: #FFF; }
+.badge.accent { background: var(--brand-accent); color: #FFF; }
 .badge.pending { background: #F5F5F5; color: #999; }
 
 .api-note {
@@ -626,7 +626,7 @@ watch(() => props.systemLogs.length, () => {
   align-items: center;
   gap: 10px;
   font-size: 12px;
-  color: #FF5722;
+  color: var(--brand-accent);
   margin-bottom: 12px;
 }
 
@@ -634,7 +634,7 @@ watch(() => props.systemLogs.length, () => {
   width: 14px;
   height: 14px;
   border: 2px solid #FFCCBC;
-  border-top-color: #FF5722;
+  border-top-color: var(--brand-accent);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }

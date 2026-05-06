@@ -1,0 +1,14 @@
+<svg width="920" height="260" viewBox="0 0 920 260" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">SignalQuay</title>
+  <desc id="desc">SignalQuay wordmark with signal wave icon</desc>
+  <rect width="920" height="260" rx="28" fill="#0A0E14"/>
+  <g transform="translate(58 52)">
+    <path d="M78 0L156 45V135L78 180L0 135V45L78 0Z" fill="#0EA5E9"/>
+    <path d="M78 28L132 59V121L78 152L24 121V59L78 28Z" fill="#0A0E14"/>
+    <path d="M46 94C61 76 95 76 110 94" stroke="#F8FAFC" stroke-width="12" stroke-linecap="round"/>
+    <path d="M28 72C54 42 102 42 128 72" stroke="#F8FAFC" stroke-width="12" stroke-linecap="round" opacity="0.72"/>
+    <circle cx="78" cy="113" r="11" fill="#F8FAFC"/>
+  </g>
+  <text x="250" y="119" fill="#F8FAFC" font-family="Space Grotesk, Arial, sans-serif" font-size="68" font-weight="700" letter-spacing="-2">SignalQuay</text>
+  <text x="254" y="166" fill="#94A3B8" font-family="JetBrains Mono, Consolas, monospace" font-size="22" font-weight="500" letter-spacing="4">SIMULATION INTELLIGENCE</text>
+</svg>
