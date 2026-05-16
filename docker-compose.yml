@@ -15,8 +15,6 @@ services:
     depends_on:
       neo4j:
         condition: service_healthy
-      ollama:
-        condition: service_started
 
   neo4j:
     image: neo4j:5.18-community
@@ -40,23 +38,8 @@ services:
       retries: 10
       start_period: 30s
 
-  ollama:
-    image: ollama/ollama:latest
-    container_name: mirofish-ollama
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-    restart: unless-stopped
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
+
 
 volumes:
   neo4j_data:
   neo4j_logs:
-  ollama_data:

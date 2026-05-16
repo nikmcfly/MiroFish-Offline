@@ -29,8 +29,10 @@ class Config:
 
     # LLM configuration (unified OpenAI format)
     LLM_API_KEY = os.environ.get('LLM_API_KEY')
-    LLM_BASE_URL = os.environ.get('LLM_BASE_URL', 'http://localhost:11434/v1')
-    LLM_MODEL_NAME = os.environ.get('LLM_MODEL_NAME', 'qwen2.5:32b')
+    LLM_BASE_URL = os.environ.get('LLM_BASE_URL', 'https://generativelanguage.googleapis.com/v1beta/openai/')
+    LLM_MODEL_NAME = os.environ.get('LLM_MODEL_NAME', 'gemini-3.1-flash-lite-preview')
+    REPORT_MODEL = os.environ.get('REPORT_MODEL', 'gemini-3.1-flash-lite-preview')
+    EXTRACTION_MODEL = os.environ.get('EXTRACTION_MODEL', 'gemini-3.1-flash-lite-preview')
 
     # Neo4j configuration
     NEO4J_URI = os.environ.get('NEO4J_URI', 'bolt://localhost:7687')
@@ -47,8 +49,9 @@ class Config:
     ALLOWED_EXTENSIONS = {'pdf', 'md', 'txt', 'markdown'}
 
     # Text processing configuration
-    DEFAULT_CHUNK_SIZE = 500  # Default chunk size
-    DEFAULT_CHUNK_OVERLAP = 50  # Default overlap size
+    DEFAULT_CHUNK_SIZE = 1500  # Optimization 2: Increased from 500
+    DEFAULT_CHUNK_OVERLAP = 150  # Scaled up overlap
+    SKIP_FACT_EMBEDDINGS = os.environ.get('SKIP_FACT_EMBEDDINGS', 'True').lower() == 'true'  # Optimization 6
 
     # OASIS simulation configuration
     OASIS_DEFAULT_MAX_ROUNDS = int(os.environ.get('OASIS_DEFAULT_MAX_ROUNDS', '10'))

@@ -10,6 +10,7 @@ import logging
 from typing import Dict, Any, List, Optional
 
 from ..utils.llm_client import LLMClient
+from ..config import Config
 
 logger = logging.getLogger('mirofish.ner_extractor')
 
@@ -49,59 +50,80 @@ class NERExtractor:
     def __init__(self, llm_client: Optional[LLMClient] = None, max_retries: int = 2):
         self.llm = llm_client or LLMClient()
         self.max_retries = max_retries
-
     def extract(self, text: str, ontology: Dict[str, Any]) -> Dict[str, Any]:
         """
         Extract entities and relations from text, guided by ontology.
-
-        Args:
-            text: Input text chunk
-            ontology: Dict with 'entity_types' and 'relation_types' from graph
-
-        Returns:
-            Dict with 'entities' and 'relations' lists:
-            {
-                "entities": [{"name": str, "type": str, "attributes": dict}],
-                "relations": [{"source": str, "target": str, "type": str, "fact": str}]
-            }
+        Uses pure LLM extraction for highest accuracy.
         """
         if not text or not text.strip():
             return {"entities": [], "relations": []}
 
-        ontology_desc = self._format_ontology(ontology)
-        system_msg = _SYSTEM_PROMPT.format(ontology_description=ontology_desc)
-        user_msg = _USER_PROMPT.format(text=text.strip())
+        return self.llm.chat_json(
+            messages=[
+                {"role": "system", "content": _SYSTEM_PROMPT.format(ontology_description=self._format_ontology(ontology))},
+                {"role": "user", "content": _USER_PROMPT.format(text=text)}
+            ],
+            temperature=0.1,
+            max_tokens=4096
+        )
 
+
+
+    def _extract_relations_only(self, text: str, entities: List[Dict[str, Any]], ontology: Dict[str, Any]) -> List[Dict[str, Any]]:
+        if len(entities) < 2:
+            return []
+        
+        extraction_model = getattr(Config, 'EXTRACTION_MODEL', None)
+        model_kwargs = {}
+        if extraction_model:
+            model_kwargs['model'] = extraction_model
+            
+        logger.info(f"[RE] Extracting relations using model: {extraction_model or self.llm.model}")
+        ontology_desc = self._format_ontology(ontology)
+        entity_names = [e["name"] for e in entities]
+        
+        system_msg = f"""Jsi systém pro extrakci relací (vztahů) z textu v češtině.
+Tvým úkolem je najít vztahy mezi zadanými entitami na základě poskytnuté ontologie.
+
+ONTOLOGIE (Definované typy vztahů):
+{ontology_desc}
+
+ENTITY NAJDENÉ V TEXTU:
+{entity_names}
+
+PRAVIDLA:
+1. Používej POUZE typy vztahů definované v ontologii.
+2. 'fact' (fakt) musí být v ČEŠTINĚ a musí přesně popisovat vztah z textu.
+3. Jako 'source' a 'target' MUSÍŠ použít PŘESNÁ jména ze seznamu ENTITY NAJDENÉ V TEXTU. Pokud najdeš v textu vztah týkající se entity (např. 'Mirek Ryba'), najdi její odpovídající název v seznamu (např. 'Miroslav Ryba') a použij ten.
+4. Pokud mezi entitami není žádný vztah, vrať prázdný seznam.
+
+Vrať POUZE validní JSON v tomto formátu:
+{{
+  "relations": [
+    {{"source": "...", "target": "...", "type": "...", "fact": "..."}}
+  ]
+}}"""
+        user_msg = f"Extrahuj vztahy z následujícího textu:\n\n{text}"
+        
         messages = [
             {"role": "system", "content": system_msg},
             {"role": "user", "content": user_msg},
         ]
-
-        last_error = None
+        
         for attempt in range(self.max_retries + 1):
             try:
                 result = self.llm.chat_json(
-                    messages=messages,
-                    temperature=0.1,  # Low temp for extraction precision
-                    max_tokens=4096,
+                    messages=messages, 
+                    temperature=0.0, 
+                    max_tokens=1000, 
+                    **model_kwargs
                 )
-                return self._validate_and_clean(result, ontology)
-
-            except ValueError as e:
-                last_error = e
-                logger.warning(
-                    f"NER extraction failed (attempt {attempt + 1}): invalid JSON — {e}"
-                )
+                relations = result.get("relations", [])
+                logger.info(f"[RE] LLM found {len(relations)} potential relations in this chunk.")
+                return relations
             except Exception as e:
-                last_error = e
-                logger.error(f"NER extraction error: {e}")
-                if attempt >= self.max_retries:
-                    break
-
-        logger.error(
-            f"NER extraction failed after {self.max_retries + 1} attempts: {last_error}"
-        )
-        return {"entities": [], "relations": []}
+                logger.warning(f"Relation extraction failed (attempt {attempt+1}): {e}")
+        return []
 
     def _format_ontology(self, ontology: Dict[str, Any]) -> str:
         """Format ontology dict into readable text for the LLM prompt."""

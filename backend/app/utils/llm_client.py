@@ -1,7 +1,7 @@
 """
 LLM Client Wrapper
 Unified OpenAI format API calls
-Supports Ollama num_ctx parameter to prevent prompt truncation
+Unified OpenAI format API calls
 """
 
 import json
@@ -36,20 +36,15 @@ class LLMClient:
             timeout=timeout,
         )
 
-        # Ollama context window size — prevents prompt truncation.
-        # Read from env OLLAMA_NUM_CTX, default 8192 (Ollama default is only 2048).
-        self._num_ctx = int(os.environ.get('OLLAMA_NUM_CTX', '8192'))
 
-    def _is_ollama(self) -> bool:
-        """Check if we're talking to an Ollama server."""
-        return '11434' in (self.base_url or '')
 
     def chat(
         self,
         messages: List[Dict[str, str]],
         temperature: float = 0.7,
         max_tokens: int = 4096,
-        response_format: Optional[Dict] = None
+        response_format: Optional[Dict] = None,
+        model: Optional[str] = None
     ) -> str:
         """
         Send chat request
@@ -64,7 +59,7 @@ class LLMClient:
             Model response text
         """
         kwargs = {
-            "model": self.model,
+            "model": model or self.model,
             "messages": messages,
             "temperature": temperature,
             "max_tokens": max_tokens,
@@ -73,11 +68,7 @@ class LLMClient:
         if response_format:
             kwargs["response_format"] = response_format
 
-        # For Ollama: pass num_ctx via extra_body to prevent prompt truncation
-        if self._is_ollama() and self._num_ctx:
-            kwargs["extra_body"] = {
-                "options": {"num_ctx": self._num_ctx}
-            }
+
 
         response = self.client.chat.completions.create(**kwargs)
         content = response.choices[0].message.content
@@ -89,7 +80,8 @@ class LLMClient:
         self,
         messages: List[Dict[str, str]],
         temperature: float = 0.3,
-        max_tokens: int = 4096
+        max_tokens: int = 4096,
+        model: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Send chat request and return JSON
@@ -106,7 +98,8 @@ class LLMClient:
             messages=messages,
             temperature=temperature,
             max_tokens=max_tokens,
-            response_format={"type": "json_object"}
+            response_format={"type": "json_object"},
+            model=model
         )
         # Clean markdown code block markers
         cleaned_response = response.strip()

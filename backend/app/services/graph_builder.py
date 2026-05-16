@@ -190,49 +190,17 @@ class GraphBuilderService:
         progress_callback: Optional[Callable] = None
     ) -> List[str]:
         """Add text in batches to graph, return uuid list of all episodes"""
-        episode_uuids = []
-        total_chunks = len(chunks)
-        total_batches = (total_chunks + batch_size - 1) // batch_size
+        logger.info(f"[graph_build] Starting parallel build: {len(chunks)} chunks, batch_size={batch_size}")
+        
+        # Use the storage-layer parallel implementation
+        episode_uuids = self.storage.add_text_batch(
+            graph_id=graph_id,
+            chunks=chunks,
+            batch_size=batch_size,
+            progress_callback=lambda p: progress_callback(f"Processing chunks ({int(p*100)}%)...", p) if progress_callback else None
+        )
 
-        logger.info(f"[graph_build] Starting: {total_chunks} chunks, {total_batches} batches (batch_size={batch_size})")
-
-        for i in range(0, total_chunks, batch_size):
-            batch_chunks = chunks[i:i + batch_size]
-            batch_num = i // batch_size + 1
-
-            if progress_callback:
-                progress = (i + len(batch_chunks)) / total_chunks
-                progress_callback(
-                    f"Processing batch {batch_num}/{total_batches} ({len(batch_chunks)} chunks)...",
-                    progress
-                )
-
-            for j, chunk in enumerate(batch_chunks):
-                chunk_idx = i + j + 1
-                chunk_preview = chunk[:80].replace('\n', ' ')
-                logger.info(
-                    f"[graph_build] Chunk {chunk_idx}/{total_chunks} "
-                    f"({len(chunk)} chars): \"{chunk_preview}...\""
-                )
-                t0 = time.time()
-                try:
-                    episode_id = self.storage.add_text(graph_id, chunk)
-                    episode_uuids.append(episode_id)
-                    elapsed = time.time() - t0
-                    logger.info(
-                        f"[graph_build] Chunk {chunk_idx}/{total_chunks} done in {elapsed:.1f}s"
-                    )
-                except Exception as e:
-                    elapsed = time.time() - t0
-                    logger.error(
-                        f"[graph_build] Chunk {chunk_idx}/{total_chunks} FAILED "
-                        f"after {elapsed:.1f}s: {e}"
-                    )
-                    if progress_callback:
-                        progress_callback(f"Batch {batch_num} processing failed: {str(e)}", 0)
-                    raise
-
-        logger.info(f"[graph_build] All {total_chunks} chunks processed successfully")
+        logger.info(f"[graph_build] All {len(chunks)} chunks processed successfully")
         return episode_uuids
 
     def _get_graph_info(self, graph_id: str) -> GraphInfo:

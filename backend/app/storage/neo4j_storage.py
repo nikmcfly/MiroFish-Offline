@@ -172,181 +172,126 @@ class Neo4jStorage(GraphStorage):
     # ----------------------------------------------------------------
     # Add data (NER → nodes/edges)
     # ----------------------------------------------------------------
-
     def add_text(self, graph_id: str, text: str) -> str:
-        """Process text: NER/RE → batch embed → create nodes/edges → return episode_id."""
+        """
+        Process text: NER/RE → batch embed → create nodes/edges → return episode_id.
+        """
         episode_id = str(uuid.uuid4())
         now = datetime.now(timezone.utc).isoformat()
-
-        # Get ontology for NER guidance
         ontology = self.get_ontology(graph_id)
 
-        # Extract entities and relations
-        logger.info(f"[add_text] Starting NER extraction for chunk ({len(text)} chars)...")
+        # 1. Extraction
         extraction = self._ner.extract(text, ontology)
         entities = extraction.get("entities", [])
         relations = extraction.get("relations", [])
 
-        logger.info(
-            f"[add_text] NER done: {len(entities)} entities, {len(relations)} relations"
-        )
-
-        # --- Batch embed all texts at once ---
+        # 2. Batch Embedding
         entity_summaries = [f"{e['name']} ({e['type']})" for e in entities]
-        fact_texts = [r.get("fact", f"{r['source']} {r['type']} {r['target']}") for r in relations]
-        all_texts_to_embed = entity_summaries + fact_texts
+        
+        # Optimization 6: Optional fact embedding skip
+        skip_facts = getattr(Config, 'SKIP_FACT_EMBEDDINGS', False)
+        if skip_facts:
+            all_texts_to_embed = entity_summaries
+        else:
+            fact_texts = [r.get("fact", f"{r['source']} {r['type']} {r['target']}") for r in relations]
+            all_texts_to_embed = entity_summaries + fact_texts
 
-        all_embeddings: list = []
+        all_embeddings = []
         if all_texts_to_embed:
-            logger.info(f"[add_text] Batch-embedding {len(all_texts_to_embed)} texts...")
             try:
                 all_embeddings = self._embedding.embed_batch(all_texts_to_embed)
             except Exception as e:
-                logger.warning(f"[add_text] Batch embedding failed, falling back to empty: {e}")
+                logger.warning(f"Batch embedding failed: {e}")
                 all_embeddings = [[] for _ in all_texts_to_embed]
 
         entity_embeddings = all_embeddings[:len(entities)]
-        relation_embeddings = all_embeddings[len(entities):]
-        logger.info(f"[add_text] Embedding done, writing to Neo4j...")
+        relation_embeddings = all_embeddings[len(entities):] if not skip_facts else [[] for _ in relations]
 
+        # 3. Neo4j Batch Write
         with self._driver.session() as session:
-            # Create episode node
-            def _create_episode(tx):
-                tx.run(
-                    """
-                    CREATE (ep:Episode {
-                        uuid: $uuid,
-                        graph_id: $graph_id,
-                        data: $data,
-                        processed: true,
-                        created_at: $created_at
+            # Episode
+            session.run(
+                "CREATE (ep:Episode {uuid: $uuid, graph_id: $gid, data: $data, processed: true, created_at: $now})",
+                uuid=episode_id, gid=graph_id, data=text, now=now
+            )
+
+            # Entities Batch
+            entity_data = []
+            for i, e in enumerate(entities):
+                entity_data.append({
+                    "uuid": str(uuid.uuid4()),
+                    "name": e["name"],
+                    "name_lower": e["name"].lower(),
+                    "type": e["type"],
+                    "summary": entity_summaries[i],
+                    "attrs_json": json.dumps(e.get("attributes", {}), ensure_ascii=False),
+                    "embedding": entity_embeddings[i] if i < len(entity_embeddings) else [],
+                    "now": now
+                })
+
+            if entity_data:
+                # Optimized MERGE with UNWIND
+                session.run("""
+                    UNWIND $batch AS item
+                    MERGE (n:Entity {graph_id: $gid, name_lower: item.name_lower})
+                    ON CREATE SET
+                        n.uuid = item.uuid,
+                        n.name = item.name,
+                        n.summary = item.summary,
+                        n.attributes_json = item.attrs_json,
+                        n.embedding = item.embedding,
+                        n.created_at = item.now
+                    ON MATCH SET
+                        n.summary = CASE WHEN n.summary = '' OR n.summary IS NULL THEN item.summary ELSE n.summary END,
+                        n.attributes_json = item.attrs_json,
+                        n.embedding = item.embedding
+                """, gid=graph_id, batch=entity_data)
+
+                # Add Labels (Dynamic labels in Cypher require separate calls or APOC, 
+                # but we can do a quick loop for labels as it's just 'SET n:Label')
+                for item in entity_data:
+                    if item["type"] and item["type"] != "Entity":
+                        session.run(f"MATCH (n:Entity {{graph_id: $gid, name_lower: $nl}}) SET n:`{item['type']}`",
+                                    gid=graph_id, nl=item["name_lower"])
+
+            # Relations Batch
+            # First map names to UUIDs from DB to be sure
+            result = session.run("MATCH (n:Entity {graph_id: $gid}) RETURN n.name_lower as nl, n.uuid as uuid", gid=graph_id)
+            uuid_map = {record["nl"]: record["uuid"] for record in result}
+
+            relation_data = []
+            for i, r in enumerate(relations):
+                src_uuid = uuid_map.get(r["source"].lower())
+                tgt_uuid = uuid_map.get(r["target"].lower())
+                if src_uuid and tgt_uuid:
+                    relation_data.append({
+                        "uuid": str(uuid.uuid4()),
+                        "src_uuid": src_uuid,
+                        "tgt_uuid": tgt_uuid,
+                        "name": r["type"],
+                        "fact": r["fact"],
+                        "fact_emb": relation_embeddings[i] if i < len(relation_embeddings) else [],
+                        "episode_id": episode_id,
+                        "now": now
                     })
-                    """,
-                    uuid=episode_id,
-                    graph_id=graph_id,
-                    data=text,
-                    created_at=now,
-                )
 
-            self._call_with_retry(session.execute_write, _create_episode)
+            if relation_data:
+                session.run("""
+                    UNWIND $batch AS item
+                    MATCH (src:Entity {uuid: item.src_uuid})
+                    MATCH (tgt:Entity {uuid: item.tgt_uuid})
+                    CREATE (src)-[r:RELATION {
+                        uuid: item.uuid,
+                        graph_id: $gid,
+                        name: item.name,
+                        fact: item.fact,
+                        fact_embedding: item.fact_emb,
+                        attributes_json: '{}',
+                        episode_ids: [item.episode_id],
+                        created_at: item.now
+                    }]->(tgt)
+                """, gid=graph_id, batch=relation_data)
 
-            # MERGE entities (upsert by graph_id + name + primary label)
-            entity_uuid_map: Dict[str, str] = {}  # name_lower -> uuid
-            for idx, entity in enumerate(entities):
-                ename = entity["name"]
-                etype = entity["type"]
-                attrs = entity.get("attributes", {})
-                summary_text = entity_summaries[idx]
-                embedding = entity_embeddings[idx] if idx < len(entity_embeddings) else []
-
-                e_uuid = str(uuid.uuid4())
-                entity_uuid_map[ename.lower()] = e_uuid
-
-                def _merge_entity(tx, _uuid=e_uuid, _name=ename, _type=etype,
-                                  _attrs=attrs, _embedding=embedding,
-                                  _summary=summary_text, _now=now):
-                    # MERGE by graph_id + lowercase name to deduplicate
-                    result = tx.run(
-                        """
-                        MERGE (n:Entity {graph_id: $gid, name_lower: $name_lower})
-                        ON CREATE SET
-                            n.uuid = $uuid,
-                            n.name = $name,
-                            n.summary = $summary,
-                            n.attributes_json = $attrs_json,
-                            n.embedding = $embedding,
-                            n.created_at = $now
-                        ON MATCH SET
-                            n.summary = CASE WHEN n.summary = '' OR n.summary IS NULL
-                                THEN $summary ELSE n.summary END,
-                            n.attributes_json = $attrs_json,
-                            n.embedding = $embedding
-                        RETURN n.uuid AS uuid
-                        """,
-                        gid=graph_id,
-                        name_lower=_name.lower(),
-                        uuid=_uuid,
-                        name=_name,
-                        summary=_summary,
-                        attrs_json=json.dumps(_attrs, ensure_ascii=False),
-                        embedding=_embedding,
-                        now=_now,
-                    )
-                    record = result.single()
-                    return record["uuid"] if record else _uuid
-
-                actual_uuid = self._call_with_retry(session.execute_write, _merge_entity)
-                entity_uuid_map[ename.lower()] = actual_uuid
-
-                # Add entity type label
-                if etype and etype != "Entity":
-                    try:
-                        def _add_label(tx, _name_lower=ename.lower()):
-                            tx.run(
-                                f"MATCH (n:Entity {{graph_id: $gid, name_lower: $nl}}) SET n:`{etype}`",
-                                gid=graph_id,
-                                nl=_name_lower,
-                            )
-                        self._call_with_retry(session.execute_write, _add_label)
-                    except Exception as e:
-                        logger.warning(f"Failed to add label '{etype}' to '{ename}': {e}")
-
-            # Create relations
-            for idx, relation in enumerate(relations):
-                source_name = relation["source"]
-                target_name = relation["target"]
-                rtype = relation["type"]
-                fact = relation["fact"]
-
-                source_uuid = entity_uuid_map.get(source_name.lower())
-                target_uuid = entity_uuid_map.get(target_name.lower())
-
-                if not source_uuid or not target_uuid:
-                    logger.warning(
-                        f"Skipping relation {source_name}->{target_name}: "
-                        f"entity not found in extraction results"
-                    )
-                    continue
-
-                fact_embedding = relation_embeddings[idx] if idx < len(relation_embeddings) else []
-                r_uuid = str(uuid.uuid4())
-
-                def _create_relation(tx, _r_uuid=r_uuid, _source_uuid=source_uuid,
-                                     _target_uuid=target_uuid, _rtype=rtype,
-                                     _fact=fact, _fact_emb=fact_embedding,
-                                     _episode_id=episode_id, _now=now):
-                    tx.run(
-                        """
-                        MATCH (src:Entity {uuid: $src_uuid})
-                        MATCH (tgt:Entity {uuid: $tgt_uuid})
-                        CREATE (src)-[r:RELATION {
-                            uuid: $uuid,
-                            graph_id: $gid,
-                            name: $name,
-                            fact: $fact,
-                            fact_embedding: $fact_embedding,
-                            attributes_json: '{}',
-                            episode_ids: [$episode_id],
-                            created_at: $now,
-                            valid_at: null,
-                            invalid_at: null,
-                            expired_at: null
-                        }]->(tgt)
-                        """,
-                        src_uuid=_source_uuid,
-                        tgt_uuid=_target_uuid,
-                        uuid=_r_uuid,
-                        gid=graph_id,
-                        name=_rtype,
-                        fact=_fact,
-                        fact_embedding=_fact_emb,
-                        episode_id=_episode_id,
-                        now=_now,
-                    )
-
-                self._call_with_retry(session.execute_write, _create_relation)
-
-        logger.info(f"[add_text] Chunk done: episode={episode_id}")
         return episode_id
 
     def add_text_batch(
@@ -354,25 +299,39 @@ class Neo4jStorage(GraphStorage):
         graph_id: str,
         chunks: List[str],
         batch_size: int = 3,
-        progress_callback: Optional[Callable] = None,
+        progress_callback: Optional[Callable] = None
     ) -> List[str]:
-        """Batch-add text chunks with progress reporting."""
-        episode_ids = []
+        """
+        Process multiple chunks in parallel.
+        Optimization 10: One-Pass NER implemented here.
+        """
+        import concurrent.futures
+        
+        # Removed One-Pass NER to allow chunk-by-chunk LLM extraction
+        
+
+
+        episode_uuids = []
         total = len(chunks)
+        
+        # Use ThreadPool for parallel LLM/Embedding calls
+        with concurrent.futures.ThreadPoolExecutor(max_workers=batch_size) as executor:
+            future_to_chunk = {
+                executor.submit(self.add_text, graph_id, chunks[i]): i 
+                for i in range(total)
+            }
+            for future in concurrent.futures.as_completed(future_to_chunk):
+                idx = future_to_chunk[future]
+                try:
+                    uuid_str = future.result()
+                    episode_uuids.append(uuid_str)
+                    if progress_callback:
+                        progress_callback(len(episode_uuids) / total)
+                except Exception as e:
+                    logger.error(f"Chunk {idx} failed: {e}")
+                    raise
 
-        for i, chunk in enumerate(chunks):
-            if not chunk or not chunk.strip():
-                continue
-            episode_id = self.add_text(graph_id, chunk)
-            episode_ids.append(episode_id)
-
-            if progress_callback:
-                progress = (i + 1) / total
-                progress_callback(progress)
-
-            logger.info(f"Processed chunk {i + 1}/{total}")
-
-        return episode_ids
+        return episode_uuids
 
     def wait_for_processing(
         self,
