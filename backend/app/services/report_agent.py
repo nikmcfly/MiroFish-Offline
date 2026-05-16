@@ -581,7 +581,8 @@ Please output the report outline in JSON format as follows:
     ]
 }
 
-Note: sections array must have at least 2 and at most 5 elements!"""
+Note: sections array must have at least 2 and at most 5 elements!
+IMPORTANT: The entire report outline (title, summary, section titles and descriptions) MUST be in English. Never use Chinese or other languages."""
 
 PLAN_USER_PROMPT_TEMPLATE = """\
 [Prediction Scenario Settings]
@@ -675,20 +676,20 @@ Your task is to:
 
 [Correct Example]
 ```
-This section analyzes the public sentiment propagation of the event. Through in-depth analysis of simulation data, we found...
+This section analyzes how the regulatory shift reshaped corporate strategy. Through in-depth analysis of simulation data, we found...
 
-**Initial Explosion Phase**
+**Initial Industry Response**
 
-Weibo, as the first scene of public sentiment, undertook the core function of initial information dissemination:
+Major tech companies moved quickly to reassess their compliance posture:
 
-> "Weibo contributed 68% of initial voice..."
+> "OpenAI and Anthropic scrambled to meet the new transparency requirements..."
 
-**Emotion Amplification Phase**
+**Emerging Strategic Divergence**
 
-The TikTok platform further amplified the impact of the event:
+A clear split emerged between companies embracing regulation and those resisting it:
 
-- Strong visual impact
-- High emotional resonance
+- Proactive compliance as competitive advantage
+- Lobbying efforts to soften enforcement
 ```
 
 [Incorrect Example]
@@ -852,7 +853,8 @@ Prediction Condition: {simulation_requirement}
 [Answer Style]
 - Concise and direct, don't write lengthy passages
 - Use > format to quote key content
-- Give conclusions first, then explain reasons"""
+- Give conclusions first, then explain reasons
+- ALWAYS respond in English, regardless of the language used in source material or report content"""
 
 CHAT_OBSERVATION_SUFFIX = "\n\nPlease answer the question concisely."
 
