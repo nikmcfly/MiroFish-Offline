@@ -53,3 +53,11 @@ dev = [
 
 [tool.hatch.build.targets.wheel]
 packages = ["app"]
+
+[tool.uv]
+override-dependencies = [
+    "tiktoken==0.8.0",
+    "pillow>=10.4.0",
+    "pandas>=2.2.3"
+
+]
