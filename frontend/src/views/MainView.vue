@@ -30,6 +30,11 @@
           <span class="dot"></span>
           {{ statusText }}
         </span>
+        <div class="step-divider"></div>
+        <span class="connection-indicator" :class="connectedClass" :title="connectedTitle">
+          <span class="conn-dot"></span>
+          {{ connectedText }}
+        </span>
       </div>
     </header>
 
@@ -49,7 +54,7 @@
       <!-- Right Panel: Step Components -->
       <div class="panel-wrapper right" :style="rightPanelStyle">
         <!-- Step 1: Graph Build -->
-        <Step1GraphBuild 
+        <Step1GraphBuild
           v-if="currentStep === 1"
           :currentPhase="currentPhase"
           :projectData="projectData"
@@ -57,7 +62,9 @@
           :buildProgress="buildProgress"
           :graphData="graphData"
           :systemLogs="systemLogs"
+          :rebuilding="rebuilding"
           @next-step="handleNextStep"
+          @rebuild="handleRebuildGraph"
         />
         <!-- Step 2: Env Setup -->
         <Step2EnvSetup
@@ -104,6 +111,13 @@ const currentPhase = ref(-1) // -1: Upload, 0: Ontology, 1: Build, 2: Complete
 const ontologyProgress = ref(null)
 const buildProgress = ref(null)
 const systemLogs = ref([])
+const rebuilding = ref(false)
+
+// Polling timeout and error tracking
+const MAX_POLL_DURATION = 30 * 60 * 1000  // 30 minutes
+const MAX_CONSECUTIVE_ERRORS = 10
+let pollStartTime = null
+let consecutivePollErrors = 0
 
 // Polling timers
 let pollTimer = null
@@ -147,6 +161,29 @@ const addLog = (msg) => {
   }
 }
 
+// --- Connection Status ---
+const backendReachable = ref(true)
+let connectionCheckTimer = null
+
+const checkBackendHealth = async () => {
+  try {
+    const res = await getProject(currentProjectId.value || 'nonexistent')
+    // Any response (even 404) means backend is reachable
+    backendReachable.value = true
+  } catch (e) {
+    if (backendReachable.value) {
+      addLog('WARNING: Backend unreachable — check if server is running')
+    }
+    backendReachable.value = false
+  }
+}
+
+const connectedClass = computed(() => backendReachable.value ? 'ok' : 'down')
+const connectedText = computed(() => backendReachable.value ? 'Connected' : 'Offline')
+const connectedTitle = computed(() => backendReachable.value
+  ? 'Backend connection OK'
+  : 'Backend unreachable — API calls will fail')
+
 // --- Layout Methods ---
 const toggleMaximize = (target) => {
   if (viewMode.value === target) {
@@ -189,8 +226,13 @@ const initProject = async () => {
 const handleNewProject = async () => {
   const pending = getPendingUpload()
   if (!pending.isPending || pending.files.length === 0) {
-    error.value = 'No pending files found.'
-    addLog('Error: No pending files found for new project.')
+    if (pending.filesLost) {
+      error.value = 'Uploaded files were lost due to a page refresh. Please go back and re-upload your files.'
+      addLog('Error: Files lost on refresh. Please re-upload from the home page.')
+    } else {
+      error.value = 'No pending files found.'
+      addLog('Error: No pending files found for new project.')
+    }
     return
   }
   
@@ -273,7 +315,7 @@ const startBuildGraph = async () => {
     currentPhase.value = 1
     buildProgress.value = { progress: 0, message: 'Starting build...' }
     addLog('Initiating graph build...')
-    
+
     const res = await buildGraph({ project_id: currentProjectId.value })
     if (res.success) {
       addLog(`Graph build task started. Task ID: ${res.data.task_id}`)
@@ -286,6 +328,35 @@ const startBuildGraph = async () => {
   } catch (err) {
     error.value = err.message
     addLog(`Exception in startBuildGraph: ${err.message}`)
+  }
+}
+
+const handleRebuildGraph = async () => {
+  if (!currentProjectId.value || rebuilding.value) return
+  try {
+    rebuilding.value = true
+    currentPhase.value = 1
+    graphData.value = null
+    buildProgress.value = { progress: 0, message: 'Rebuilding graph...' }
+    error.value = ''
+    addLog('Rebuilding graph with force=true...')
+
+    const res = await buildGraph({ project_id: currentProjectId.value, force: true })
+    if (res.success) {
+      addLog(`Rebuild task started. Task ID: ${res.data.task_id}`)
+      startGraphPolling()
+      startPollingTask(res.data.task_id)
+    } else {
+      error.value = res.error
+      addLog(`Error starting rebuild: ${res.error}`)
+      currentPhase.value = 2
+    }
+  } catch (err) {
+    error.value = err.message
+    addLog(`Exception in rebuild: ${err.message}`)
+    currentPhase.value = 2
+  } finally {
+    rebuilding.value = false
   }
 }
 
@@ -314,43 +385,76 @@ const fetchGraphData = async () => {
 }
 
 const startPollingTask = (taskId) => {
+  pollStartTime = Date.now()
+  consecutivePollErrors = 0
   pollTaskStatus(taskId)
   pollTimer = setInterval(() => pollTaskStatus(taskId), 2000)
 }
 
 const pollTaskStatus = async (taskId) => {
+  // Check timeout
+  if (pollStartTime && (Date.now() - pollStartTime > MAX_POLL_DURATION)) {
+    stopPolling()
+    stopGraphPolling()
+    addLog('WARNING: Polling timed out after 30 minutes. The build may still be running in the backend. Try refreshing.')
+    buildProgress.value = { progress: buildProgress.value?.progress || 0, message: 'Polling timed out — check backend logs' }
+    return
+  }
+
   try {
     const res = await getTaskStatus(taskId)
+    consecutivePollErrors = 0  // Reset on success
+
     if (res.success) {
       const task = res.data
-      
+
       // Log progress message if it changed
       if (task.message && task.message !== buildProgress.value?.message) {
         addLog(task.message)
       }
-      
+
       buildProgress.value = { progress: task.progress || 0, message: task.message }
-      
+
       if (task.status === 'completed') {
         addLog('Graph build task completed.')
         stopPolling()
-        stopGraphPolling() // Stop polling, do final load
+        stopGraphPolling()
         currentPhase.value = 2
-        
-        // Final load
+
         const projRes = await getProject(currentProjectId.value)
         if (projRes.success && projRes.data.graph_id) {
             projectData.value = projRes.data
             await loadGraph(projRes.data.graph_id)
+            const nodeCount = graphData.value?.node_count || graphData.value?.nodes?.length || 0
+            if (nodeCount > 0) {
+              addLog(`Graph loaded: ${nodeCount} entities.`)
+            } else {
+              addLog('WARNING: Graph build completed but 0 entities found. Use Rebuild to retry.')
+            }
         }
       } else if (task.status === 'failed') {
         stopPolling()
-        error.value = task.error
-        addLog(`Graph build task failed: ${task.error}`)
+        stopGraphPolling()
+        currentPhase.value = 2
+        addLog(`Graph build FAILED: ${task.error || task.message || 'Unknown error'}`)
+
+        const projRes = await getProject(currentProjectId.value)
+        if (projRes.success && projRes.data.graph_id) {
+          projectData.value = projRes.data
+          await loadGraph(projRes.data.graph_id)
+        }
       }
     }
   } catch (e) {
-    console.error(e)
+    consecutivePollErrors++
+    if (consecutivePollErrors >= MAX_CONSECUTIVE_ERRORS) {
+      stopPolling()
+      stopGraphPolling()
+      addLog(`ERROR: Lost connection to backend after ${MAX_CONSECUTIVE_ERRORS} failed attempts. The backend may have restarted.`)
+      buildProgress.value = { progress: buildProgress.value?.progress || 0, message: 'Backend unreachable — try refreshing or rebuilding' }
+    } else if (consecutivePollErrors <= 3) {
+      addLog(`Connection issue (attempt ${consecutivePollErrors})...`)
+    }
   }
 }
 
@@ -396,11 +500,18 @@ const stopGraphPolling = () => {
 
 onMounted(() => {
   initProject()
+  // Check backend health every 15 seconds
+  checkBackendHealth()
+  connectionCheckTimer = setInterval(checkBackendHealth, 15000)
 })
 
 onUnmounted(() => {
   stopPolling()
   stopGraphPolling()
+  if (connectionCheckTimer) {
+    clearInterval(connectionCheckTimer)
+    connectionCheckTimer = null
+  }
 })
 </script>
 
@@ -516,6 +627,27 @@ onUnmounted(() => {
 .status-indicator.processing .dot { background: #FF5722; animation: pulse 1s infinite; }
 .status-indicator.completed .dot { background: #4CAF50; }
 .status-indicator.error .dot { background: #F44336; }
+
+.connection-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #999;
+  cursor: default;
+}
+
+.conn-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.connection-indicator.ok .conn-dot { background: #4CAF50; }
+.connection-indicator.ok { color: #4CAF50; }
+.connection-indicator.down .conn-dot { background: #F44336; animation: pulse 1s infinite; }
+.connection-indicator.down { color: #F44336; }
 
 @keyframes pulse { 50% { opacity: 0.5; } }
 
