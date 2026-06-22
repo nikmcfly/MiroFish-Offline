@@ -61,6 +61,28 @@ class Neo4jStorage(GraphStorage):
         """Close the Neo4j driver connection."""
         self._driver.close()
 
+    def health_check(self) -> bool:
+        """Verify Neo4j connection is alive. Returns True if reachable."""
+        try:
+            with self._driver.session() as session:
+                result = session.run("RETURN 1 AS ok")
+                return result.single()["ok"] == 1
+        except Exception as e:
+            logger.error(f"[Neo4j] Health check failed: {e}")
+            return False
+
+    def _verify_connection(self, operation_name: str = "operation") -> None:
+        """
+        Verify Neo4j is reachable before a critical operation.
+        Raises ConnectionError if unreachable.
+        """
+        if not self.health_check():
+            raise ConnectionError(
+                f"Neo4j is unreachable at {self._uri}. "
+                f"Cannot proceed with {operation_name}. "
+                f"Check that the Neo4j container is running."
+            )
+
     def _ensure_schema(self):
         """Create indexes and constraints if they don't exist."""
         with self._driver.session() as session:
@@ -101,6 +123,7 @@ class Neo4jStorage(GraphStorage):
     # ----------------------------------------------------------------
 
     def create_graph(self, name: str, description: str = "") -> str:
+        self._verify_connection("create_graph")
         graph_id = str(uuid.uuid4())
         now = datetime.now(timezone.utc).isoformat()
 
@@ -175,6 +198,7 @@ class Neo4jStorage(GraphStorage):
 
     def add_text(self, graph_id: str, text: str) -> str:
         """Process text: NER/RE → batch embed → create nodes/edges → return episode_id."""
+        self._verify_connection("add_text (NER extraction)")
         episode_id = str(uuid.uuid4())
         now = datetime.now(timezone.utc).isoformat()
 
@@ -202,7 +226,7 @@ class Neo4jStorage(GraphStorage):
             try:
                 all_embeddings = self._embedding.embed_batch(all_texts_to_embed)
             except Exception as e:
-                logger.warning(f"[add_text] Batch embedding failed, falling back to empty: {e}")
+                logger.error(f"[add_text] Batch embedding FAILED — vectors will be empty, vector search will NOT work: {e}")
                 all_embeddings = [[] for _ in all_texts_to_embed]
 
         entity_embeddings = all_embeddings[:len(entities)]

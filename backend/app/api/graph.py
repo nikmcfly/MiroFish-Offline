@@ -454,12 +454,42 @@ def build_graph():
                 )
                 graph_data = builder.get_graph_data(graph_id)
 
+                node_count = graph_data.get("node_count", 0)
+                edge_count = graph_data.get("edge_count", 0)
+
+                # Check if any entities were actually extracted
+                if node_count == 0:
+                    build_logger.error(
+                        f"[{task_id}] Graph build produced 0 entities — "
+                        f"NER extraction may have failed. graph_id={graph_id}"
+                    )
+                    project.status = ProjectStatus.FAILED
+                    project.error = (
+                        "Graph build completed but extracted 0 entities. "
+                        "This usually means the LLM failed during entity extraction. "
+                        "Check backend logs for NER/embedding errors and try rebuilding."
+                    )
+                    ProjectManager.save_project(project)
+
+                    task_manager.update_task(
+                        task_id,
+                        status=TaskStatus.FAILED,
+                        message="Graph build produced 0 entities — LLM extraction may have failed",
+                        progress=100,
+                        result={
+                            "project_id": project_id,
+                            "graph_id": graph_id,
+                            "node_count": 0,
+                            "edge_count": 0,
+                            "chunk_count": total_chunks
+                        }
+                    )
+                    return
+
                 # Update project status
                 project.status = ProjectStatus.GRAPH_COMPLETED
                 ProjectManager.save_project(project)
 
-                node_count = graph_data.get("node_count", 0)
-                edge_count = graph_data.get("edge_count", 0)
                 build_logger.info(f"[{task_id}] Graph build completed: graph_id={graph_id}, nodes={node_count}, edges={edge_count}")
 
                 # Complete
