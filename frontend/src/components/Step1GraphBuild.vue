@@ -113,7 +113,8 @@
             <span class="step-title">GraphRAG Build</span>
           </div>
           <div class="step-status">
-            <span v-if="currentPhase > 1" class="badge success">Completed</span>
+            <span v-if="currentPhase > 1 && graphStats.nodes > 0" class="badge success">Completed</span>
+            <span v-else-if="currentPhase >= 2 && graphStats.nodes === 0" class="badge failed">Failed</span>
             <span v-else-if="currentPhase === 1" class="badge processing">{{ buildProgress?.progress || 0 }}%</span>
             <span v-else class="badge pending">Waiting</span>
           </div>
@@ -124,10 +125,10 @@
           <p class="description">
             Based on the generated ontology, automatically chunk documents and invoke Neo4j to build knowledge graphs, extract entities and relationships, and form temporal memory and community summaries
           </p>
-          
+
           <!-- Stats Cards -->
           <div class="stats-grid">
-            <div class="stat-card">
+            <div class="stat-card" :class="{ 'warn': currentPhase >= 2 && graphStats.nodes === 0 }">
               <span class="stat-value">{{ graphStats.nodes }}</span>
               <span class="stat-label">Entity Nodes</span>
             </div>
@@ -139,6 +140,18 @@
               <span class="stat-value">{{ graphStats.types }}</span>
               <span class="stat-label">SCHEMA Types</span>
             </div>
+          </div>
+
+          <!-- Rebuild button when 0 entities -->
+          <div v-if="currentPhase >= 2 && graphStats.nodes === 0" class="rebuild-section">
+            <div class="rebuild-warning">
+              <span class="warning-icon">⚠</span>
+              <span>0 entities extracted — NER may have failed. Rebuild to retry with updated extraction.</span>
+            </div>
+            <button class="rebuild-btn" @click="$emit('rebuild')" :disabled="rebuilding">
+              <span v-if="rebuilding" class="spinner-sm"></span>
+              {{ rebuilding ? 'Rebuilding...' : '↻ Rebuild Graph' }}
+            </button>
           </div>
         </div>
       </div>
@@ -199,10 +212,11 @@ const props = defineProps({
   ontologyProgress: Object,
   buildProgress: Object,
   graphData: Object,
-  systemLogs: { type: Array, default: () => [] }
+  systemLogs: { type: Array, default: () => [] },
+  rebuilding: { type: Boolean, default: false }
 })
 
-defineEmits(['next-step'])
+defineEmits(['next-step', 'rebuild'])
 
 const selectedOntologyItem = ref(null)
 const logContent = ref(null)
@@ -347,6 +361,7 @@ watch(() => props.systemLogs.length, () => {
 .badge.processing { background: #FF5722; color: #FFF; }
 .badge.accent { background: #FF5722; color: #FFF; }
 .badge.pending { background: #F5F5F5; color: #999; }
+.badge.failed { background: #FBE9E7; color: #D84315; }
 
 .api-note {
   font-family: 'JetBrains Mono', monospace;
@@ -640,6 +655,49 @@ watch(() => props.systemLogs.length, () => {
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* Rebuild Section */
+.rebuild-section {
+  margin-top: 12px;
+  padding: 12px;
+  background: #FFF3E0;
+  border: 1px solid #FFCC80;
+  border-radius: 6px;
+}
+
+.rebuild-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 11px;
+  color: #E65100;
+  line-height: 1.4;
+}
+
+.warning-icon { font-size: 14px; flex-shrink: 0; }
+
+.rebuild-btn {
+  width: 100%;
+  padding: 10px;
+  background: #FF5722;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.rebuild-btn:hover:not(:disabled) { background: #E64A19; }
+.rebuild-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.stat-card.warn { background: #FFF3E0; border-radius: 4px; }
 
 /* System Logs */
 .system-logs {

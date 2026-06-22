@@ -372,9 +372,20 @@
             </div>
           </div>
 
+          <!-- Warning when 0 entities extracted -->
+          <div class="rebuild-section" v-if="currentPhase >= 2 && graphData && (graphData.node_count === 0 || (!graphData.node_count && (!graphData.nodes || graphData.nodes.length === 0)))">
+            <div class="rebuild-warning">
+              <span class="warning-icon">⚠</span>
+              <span>Graph has 0 entity nodes. The NER extraction may have failed. Rebuild to retry.</span>
+            </div>
+            <button class="rebuild-btn" @click="rebuildGraph" :disabled="rebuilding">
+              {{ rebuilding ? 'Rebuilding...' : '↻ Rebuild Graph' }}
+            </button>
+          </div>
+
           <!-- Next step button -->
           <div class="next-step-section" v-if="currentPhase >= 2">
-            <button class="next-step-btn" @click="goToNextStep" :disabled="currentPhase < 2">
+            <button class="next-step-btn" @click="goToNextStep" :disabled="currentPhase < 2 || hasZeroEntities">
               Enter Environment Setup
               <span class="btn-arrow">→</span>
             </button>
@@ -435,6 +446,7 @@ const ontologyProgress = ref(null) // Ontology generation progress
 const currentPhase = ref(-1) // -1: Uploading, 0: Generating ontology, 1: Building graph, 2: Complete
 const selectedItem = ref(null) // Selected node or edge
 const isFullScreen = ref(false)
+const rebuilding = ref(false)
 
 // DOM refs
 const graphContainer = ref(null)
@@ -456,6 +468,12 @@ const statusText = computed(() => {
   if (currentPhase.value === 1) return 'Building Graph'
   if (currentPhase.value === 0) return 'Generating Ontology'
   return 'Initializing'
+})
+
+const hasZeroEntities = computed(() => {
+  if (!graphData.value) return false
+  const nodeCount = graphData.value.node_count || graphData.value.nodes?.length || 0
+  return nodeCount === 0
 })
 
 const entityTypes = computed(() => {
@@ -481,8 +499,33 @@ const goHome = () => {
 }
 
 const goToNextStep = () => {
-  // TODO: Enter environment setup step
-  alert('Environment setup in development...')
+  if (!currentProjectId.value || currentProjectId.value === 'new') return
+  router.push({ name: 'Process', params: { projectId: currentProjectId.value }, query: { step: 'env' } })
+}
+
+const rebuildGraph = async () => {
+  if (!currentProjectId.value || rebuilding.value) return
+  try {
+    rebuilding.value = true
+    currentPhase.value = 1
+    graphData.value = null
+    buildProgress.value = { progress: 0, message: 'Starting rebuild...' }
+    error.value = ''
+
+    const response = await buildGraph({ project_id: currentProjectId.value, force: true })
+    if (response.success) {
+      startPolling(response.data.task_id)
+      startGraphPolling()
+    } else {
+      error.value = response.error || 'Rebuild failed'
+      currentPhase.value = 2
+    }
+  } catch (err) {
+    error.value = err.message || 'Rebuild failed'
+    currentPhase.value = 2
+  } finally {
+    rebuilding.value = false
+  }
 }
 
 const toggleFullScreen = () => {
@@ -2056,5 +2099,48 @@ onUnmounted(() => {
   .right-panel.hidden {
       display: none;
   }
+}
+
+.rebuild-section {
+  margin: 12px 0;
+  padding: 12px;
+  background: rgba(255, 107, 53, 0.1);
+  border: 1px solid rgba(255, 107, 53, 0.3);
+  border-radius: 8px;
+}
+
+.rebuild-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: #FF6B35;
+}
+
+.warning-icon {
+  font-size: 16px;
+}
+
+.rebuild-btn {
+  width: 100%;
+  padding: 8px 16px;
+  background: #FF6B35;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.rebuild-btn:hover:not(:disabled) {
+  background: #e55a25;
+}
+
+.rebuild-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>
