@@ -2,7 +2,7 @@
 name = "mirofish-offline-backend"
 version = "0.2.0"
 description = "MiroFish-Offline - Offline-first fork running on Neo4j + Ollama"
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.13"
 license = { text = "AGPL-3.0" }
 authors = [
     { name = "MiroFish Team" }

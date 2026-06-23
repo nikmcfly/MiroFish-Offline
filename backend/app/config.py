@@ -70,9 +70,9 @@ class Config:
     REPORT_AGENT_TEMPERATURE = float(os.environ.get('REPORT_AGENT_TEMPERATURE', '0.5'))
 
     @classmethod
-    def validate(cls):
+    def validate(cls) -> list[str]:
         """Validate required configuration"""
-        errors = []
+        errors: list[str] = []
         if not cls.LLM_API_KEY:
             errors.append("LLM_API_KEY not configured (set to any non-empty value, e.g. 'ollama')")
         if not cls.NEO4J_URI:
