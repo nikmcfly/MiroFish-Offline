@@ -482,7 +482,10 @@ class OasisProfileGenerator:
                     # Don't set max_tokens, let LLM generate freely
                 )
 
-                content = response.choices[0].message.content
+                # None when the model emitted no text -- reasoning models do this
+                # when reasoning tokens exhaust max_tokens, which is exactly the
+                # finish_reason='length' case handled just below.
+                content = response.choices[0].message.content or ""
 
                 # Check if output was truncated (finish_reason is not 'stop')
                 finish_reason = response.choices[0].finish_reason

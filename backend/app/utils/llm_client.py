@@ -80,7 +80,11 @@ class LLMClient:
             }
 
         response = self.client.chat.completions.create(**kwargs)
-        content = response.choices[0].message.content
+        # `content` is None when the model returns no text at all -- reasoning
+        # models do this when the reasoning tokens exhaust max_tokens
+        # (finish_reason='length'). Without this the re.sub below raises
+        # TypeError instead of returning an empty result.
+        content = response.choices[0].message.content or ""
         # Some models (like MiniMax M2.5) include <think>thinking content in response, need to remove
         content = re.sub(r'<think>[\s\S]*?</think>', '', content).strip()
         return content
