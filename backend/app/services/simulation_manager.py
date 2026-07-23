@@ -457,7 +457,19 @@ class SimulationManager:
             state.error = str(e)
             self._save_simulation_state(state)
             raise
-    
+        finally:
+            # Profile generation (phase 2) and config generation (phase 3) both
+            # drive the LLM; release the model once preparation ends so it stops
+            # occupying memory another model may need. `finally` so a failed
+            # preparation frees it too. No-op unless the provider is Ollama;
+            # disable with LLM_UNLOAD_AFTER_USE=0.
+            try:
+                from ..utils.llm_client import LLMClient
+                if LLMClient().unload():
+                    logger.info("LLM unloaded from Ollama")
+            except Exception as unload_err:
+                logger.warning(f"LLM unload skipped: {unload_err}")
+
     def get_simulation(self, simulation_id: str) -> Optional[SimulationState]:
         """Get simulation state"""
         return self._load_simulation_state(simulation_id)

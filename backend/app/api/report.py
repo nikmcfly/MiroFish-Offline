@@ -95,6 +95,17 @@ def generate_report():
             except Exception as e:
                 logger.error(f"Report generation failed: {str(e)}")
                 task_manager.fail_task(task_id, str(e))
+            finally:
+                # Release the model once the report is done, so it stops
+                # occupying memory another model may need. `finally` so a
+                # failed report frees it too. No-op unless the provider is
+                # Ollama; disable with LLM_UNLOAD_AFTER_USE=0.
+                try:
+                    from ..utils.llm_client import LLMClient
+                    if LLMClient().unload():
+                        logger.info("LLM unloaded from Ollama")
+                except Exception as unload_err:
+                    logger.warning(f"LLM unload skipped: {unload_err}")
 
         thread = threading.Thread(target=run_generate, daemon=True)
         thread.start()

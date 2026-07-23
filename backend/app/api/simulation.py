@@ -1439,6 +1439,17 @@ def generate_profiles():
             "error": str(e),
             "traceback": traceback.format_exc()
         }), 500
+    finally:
+        # Release the model once profile generation ends, so it stops occupying
+        # memory another model may need. `finally` so a failure frees it too.
+        # No-op unless the provider is Ollama; disable with
+        # LLM_UNLOAD_AFTER_USE=0.
+        try:
+            from ..utils.llm_client import LLMClient
+            if LLMClient().unload():
+                logger.info("LLM unloaded from Ollama")
+        except Exception as unload_err:
+            logger.warning(f"LLM unload skipped: {unload_err}")
 
 
 # ============== Simulation execution control interface ==============
