@@ -44,6 +44,47 @@ class LLMClient:
         """Check if we're talking to an Ollama server."""
         return '11434' in (self.base_url or '')
 
+    def unload(self) -> bool:
+        """Ask Ollama to release this model from memory. Best-effort.
+
+        Ollama keeps a model resident after a request for OLLAMA_KEEP_ALIVE
+        (5 minutes by default, indefinitely when set to -1). MiroFish's models
+        are large — granite4:small-h is ~19 GB — so holding one after a run can
+        block every other model sharing that Ollama instance.
+
+        The obvious fix does not work: Ollama's OpenAI-compatible
+        /v1/chat/completions accepts a `keep_alive` field and silently ignores
+        it (verified on Ollama 0.32.1 — the model still reports "Forever"),
+        while the native API honours it. So this posts keep_alive=0 to the
+        native /api/generate, which is what `ollama stop <model>` does.
+
+        No-op for non-Ollama providers. Set LLM_UNLOAD_AFTER_USE=0 to keep the
+        old behaviour of leaving the model resident between runs.
+
+        Returns True if the unload request was sent successfully.
+        """
+        if not self._is_ollama():
+            return False
+        if os.environ.get('LLM_UNLOAD_AFTER_USE', '1').lower() in ('0', 'false', 'no'):
+            return False
+        try:
+            import urllib.request
+            root = self.base_url.rstrip('/')
+            if root.endswith('/v1'):
+                root = root[:-3]
+            payload = json.dumps({"model": self.model, "keep_alive": 0}).encode()
+            req = urllib.request.Request(
+                f"{root}/api/generate", data=payload,
+                headers={"Content-Type": "application/json"}, method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=30):
+                pass
+            return True
+        except Exception:
+            # Freeing memory is an optimisation, never a correctness
+            # requirement — a failure here must not affect the caller.
+            return False
+
     def chat(
         self,
         messages: List[Dict[str, str]],
