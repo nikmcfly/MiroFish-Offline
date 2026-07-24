@@ -20,6 +20,14 @@ RUN npm ci \
   && npm ci --prefix frontend \
   && cd backend && uv sync
 
+# Pre-seed the tiktoken BPE encodings at build time. CAMEL/OASIS token counting
+# imports tiktoken, which otherwise downloads o200k_base/cl100k_base from
+# openaipublic.blob.core.windows.net on first use — a runtime cloud dependency
+# that crashes the simulation subprocess in offline or DNS-restricted
+# environments. Baking them in keeps simulation runtime fully offline.
+ENV TIKTOKEN_CACHE_DIR=/app/tiktoken_cache
+RUN cd backend && uv run python -c "import tiktoken; tiktoken.get_encoding('o200k_base'); tiktoken.get_encoding('cl100k_base')"
+
 # 复制项目源码
 COPY . .
 
