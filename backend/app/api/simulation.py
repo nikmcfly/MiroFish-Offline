@@ -24,6 +24,12 @@ logger = get_logger('mirofish.api.simulation')
 INTERVIEW_PROMPT_PREFIX = "Based on your persona, all your past memories and actions, reply directly to me with text without calling any tools:"
 
 
+# Active prepare tasks per simulation_id — guards against concurrent
+# prepare threads (each duplicate spawns a full persona-generation pass
+# and they race on the same output files).
+_active_prepares = {}
+
+
 def optimize_interview_prompt(prompt: str) -> str:
     """
     Optimize Interview questions, add prefix to avoid agent calling tools
@@ -410,7 +416,26 @@ def prepare_simulation():
                 "success": False,
                 "error": f"Simulation does not exist: {simulation_id}"
             }), 404
-        
+
+        # Guard: refuse to start a second prepare while one is running
+        task_manager_guard = TaskManager()
+        active_task_id = _active_prepares.get(simulation_id)
+        if active_task_id:
+            active_task = task_manager_guard.get_task(active_task_id)
+            if active_task and active_task.status in (TaskStatus.PENDING, TaskStatus.PROCESSING):
+                logger.info(f"Prepare already running for {simulation_id} (task {active_task_id}), returning existing task")
+                return jsonify({
+                    "success": True,
+                    "data": {
+                        "simulation_id": simulation_id,
+                        "task_id": active_task_id,
+                        "status": "preparing",
+                        "progress": active_task.progress,
+                        "message": "Preparation already in progress"
+                    }
+                })
+            _active_prepares.pop(simulation_id, None)
+
         # Check if forced regeneration
         force_regenerate = data.get('force_regenerate', False)
         logger.info(f"Start processing /prepare Request: simulation_id={simulation_id}, force_regenerate={force_regenerate}")
@@ -599,8 +624,17 @@ def prepare_simulation():
                     state.error = str(e)
                     manager._save_simulation_state(state)
         
-        # Start background thread
-        thread = threading.Thread(target=run_prepare, daemon=True)
+        # Start background thread (registered so a second /prepare is refused)
+        _active_prepares[simulation_id] = task_id
+
+        def run_prepare_guarded():
+            try:
+                run_prepare()
+            finally:
+                if _active_prepares.get(simulation_id) == task_id:
+                    _active_prepares.pop(simulation_id, None)
+
+        thread = threading.Thread(target=run_prepare_guarded, daemon=True)
         thread.start()
         
         return jsonify({
@@ -659,11 +693,11 @@ def get_prepare_status():
             }
         }
     """
-    from ..models.task import TaskManager
-    
+    from ..models.task import TaskManager, TaskStatus
+
     try:
         data = request.get_json() or {}
-        
+
         task_id = data.get('task_id')
         simulation_id = data.get('simulation_id')
         
@@ -686,6 +720,24 @@ def get_prepare_status():
         # If no task_id，ReturnError
         if not task_id:
             if simulation_id:
+                # A prepare thread may be running — report it instead of
+                # "not_started" (the misleading status caused duplicate prepares)
+                active_task_id = _active_prepares.get(simulation_id)
+                if active_task_id:
+                    task_manager_live = TaskManager()
+                    active_task = task_manager_live.get_task(active_task_id)
+                    if active_task and active_task.status in (TaskStatus.PENDING, TaskStatus.PROCESSING):
+                        return jsonify({
+                            "success": True,
+                            "data": {
+                                "simulation_id": simulation_id,
+                                "task_id": active_task_id,
+                                "status": "preparing",
+                                "progress": active_task.progress,
+                                "message": active_task.message,
+                                "already_prepared": False
+                            }
+                        })
                 # Have simulation_idBut notPreparation complete
                 return jsonify({
                     "success": True,
