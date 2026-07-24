@@ -1796,21 +1796,30 @@ class ReportAgent:
         
         chat_history = chat_history or []
         
-        # GetalreadygenerateReportcontent
-        report_content = ""
-        try:
-            report = ReportManager.get_report_by_simulation(self.simulation_id)
-            if report and report.markdown_content:
-                # limitReportlength，avoid overly long context
-                report_content = report.markdown_content[:15000]
-                if len(report.markdown_content) > 15000:
-                    report_content += "\n\n... [reportcontenthasTruncate] ..."
-        except Exception as e:
-            logger.warning(f"getreportcontentfailed: {e}")
-        
+        # Get the generated report content — fail explicitly instead of
+        # silently chatting against an empty report (issue #58b)
+        report = None
+        for attempt in range(2):
+            try:
+                report = ReportManager.get_report_by_simulation(self.simulation_id)
+                break
+            except Exception as e:
+                logger.warning(f"Loading report failed (attempt {attempt + 1}/2): {e}")
+
+        if not report or not report.markdown_content:
+            raise ValueError(
+                "Report not available for this simulation yet — it may still be "
+                "generating or failed to load. Please retry once the report is complete."
+            )
+
+        # limit report length to avoid an overly long context
+        report_content = report.markdown_content[:15000]
+        if len(report.markdown_content) > 15000:
+            report_content += "\n\n... [report content truncated] ..."
+
         system_prompt = CHAT_SYSTEM_PROMPT_TEMPLATE.format(
             simulation_requirement=self.simulation_requirement,
-            report_content=report_content if report_content else "（nonereport）",
+            report_content=report_content,
             tools_description=self._get_tools_description(),
         )
 
