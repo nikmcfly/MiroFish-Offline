@@ -1296,9 +1296,19 @@ const InterviewDisplay = {
     const platformTabs = reactive({}) // { 'agentIdx-qIdx': 'twitter' | 'reddit' }
 
     // Get current platform selection for a question
-    const getPlatformTab = (agentIdx, qIdx) => {
+    const getPlatformTab = (agentIdx, qIdx, interview) => {
       const key = `${agentIdx}-${qIdx}`
-      return platformTabs[key] || 'twitter'
+      if (platformTabs[key]) return platformTabs[key]
+      // Default: first platform that carries a real (non-empty, non-placeholder)
+      // answer for this question — critical for single-platform sims where the
+      // other side is absent. Only fall back to 'twitter' when both are real.
+      if (interview) {
+        const twitterReal = !isPlaceholderText(getAnswerForQuestion(interview, qIdx, 'twitter'))
+        if (twitterReal) return 'twitter'
+        const redditReal = !isPlaceholderText(getAnswerForQuestion(interview, qIdx, 'reddit'))
+        if (redditReal) return 'reddit'
+      }
+      return 'twitter'
     }
     
     // Set platform selection for a question
@@ -1341,8 +1351,9 @@ const InterviewDisplay = {
       let matches = []
       let match
 
-      // Prefer to try "Question X:" format
-      const enPattern = /(?:^|[\r\n]+)Question\s+(\d+)[：:]\s*/g
+      // Prefer to try "Question X:" format — tolerant of Markdown wrapping, e.g.
+      // "**Question 1:**", "__Question 1:__", "> Question 1 :"
+      const enPattern = /(?:^|[\r\n]+)[*_#>\s]*Question\s+(\d+)\s*[*_]*[：:][*_]*\s*/g
       while ((match = enPattern.exec(answerText)) !== null) {
         matches.push({
           num: parseInt(match[1]),
@@ -1366,7 +1377,7 @@ const InterviewDisplay = {
       // If no numbering or only one found, return whole text
       if (matches.length <= 1) {
         const cleaned = answerText
-          .replace(/^Question\s+\d+[：:]\s*/, '')
+          .replace(/^[*_#>\s]*Question\s+\d+\s*[*_]*[：:][*_]*\s*/, '')
           .replace(/^\d+\.\s+/, '')
           .trim()
         return [cleaned || answerText]
@@ -1383,6 +1394,8 @@ const InterviewDisplay = {
 
         let part = answerText.substring(startIdx, endIdx).trim()
         part = part.replace(/[\r\n]+$/, '').trim()
+        // Trim leftover Markdown emphasis markers around the extracted answer
+        part = part.replace(/^[*_\s]+/, '').replace(/[*_\s]+$/, '')
         parts.push(part)
       }
 
@@ -1395,7 +1408,11 @@ const InterviewDisplay = {
 
     // Get answer for a specific question
     const getAnswerForQuestion = (interview, qIdx, platform) => {
-      const answer = platform === 'twitter' ? interview.twitterAnswer : (interview.redditAnswer || interview.twitterAnswer)
+      // Symmetric fallback: if the requested platform's answer is empty or a
+      // placeholder, use the other platform's answer (works both directions).
+      const primary = platform === 'twitter' ? interview.twitterAnswer : interview.redditAnswer
+      const other = platform === 'twitter' ? interview.redditAnswer : interview.twitterAnswer
+      const answer = (!primary || isPlaceholderText(primary)) ? (other || primary) : primary
       if (!answer || isPlaceholderText(answer)) return answer || ''
 
       const questionCount = interview.questions?.length || 1
@@ -1478,7 +1495,7 @@ const InterviewDisplay = {
             : [props.result.interviews[activeIndex.value]?.question || 'No question available']
           ).map((question, qIdx) => {
             const interview = props.result.interviews[activeIndex.value]
-            const currentPlatform = getPlatformTab(activeIndex.value, qIdx)
+            const currentPlatform = getPlatformTab(activeIndex.value, qIdx, interview)
             const answerText = getAnswerForQuestion(interview, qIdx, currentPlatform)
             const hasDualPlatform = hasMultiplePlatforms(interview, qIdx)
             const expandKey = `${activeIndex.value}-${qIdx}`

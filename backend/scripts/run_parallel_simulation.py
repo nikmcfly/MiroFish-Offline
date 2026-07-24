@@ -470,7 +470,11 @@ class ParallelIPCHandler:
                     
                     for interview in twitter_interviews:
                         agent_id = interview.get("agent_id")
-                        result = self._get_interview_result(agent_id, "twitter")
+                        try:
+                            result = self._get_interview_result(agent_id, "twitter")
+                        except Exception as e:
+                            print(f"  Warning: interview result missing for agent {agent_id}: {e}")
+                            result = {"agent_id": agent_id, "response": "", "error": str(e)}
                         result["platform"] = "twitter"
                         results[f"twitter_{agent_id}"] = result
             except Exception as e:
@@ -497,7 +501,11 @@ class ParallelIPCHandler:
                     
                     for interview in reddit_interviews:
                         agent_id = interview.get("agent_id")
-                        result = self._get_interview_result(agent_id, "reddit")
+                        try:
+                            result = self._get_interview_result(agent_id, "reddit")
+                        except Exception as e:
+                            print(f"  Warning: interview result missing for agent {agent_id}: {e}")
+                            result = {"agent_id": agent_id, "response": "", "error": str(e)}
                         result["platform"] = "reddit"
                         results[f"reddit_{agent_id}"] = result
             except Exception as e:

@@ -281,7 +281,11 @@ class IPCHandler:
             # Get all results
             results = {}
             for agent_id in agent_prompts.keys():
-                result = self._get_interview_result(agent_id)
+                try:
+                    result = self._get_interview_result(agent_id)
+                except Exception as e:
+                    print(f"  Warning: interview result missing for agent {agent_id}: {e}")
+                    result = {"agent_id": agent_id, "response": "", "error": str(e)}
                 results[agent_id] = result
             
             self.send_response(command_id, "completed", result={
