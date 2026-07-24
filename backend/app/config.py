@@ -8,13 +8,22 @@ from dotenv import load_dotenv
 
 # Load .env file from project root
 # Path: MiroFish/.env (relative to backend/app/config.py)
+#
+# override=False is deliberate: real OS environment variables must win over the
+# .env file. The Docker deployment feeds configuration into the container through
+# the environment — docker-compose injects the vars from `.env` via `env_file:`
+# (and NEO4J_URI must point at the compose service, e.g. bolt://neo4j:7687, not
+# the localhost value that is only correct for native dev). With override=True a
+# stray/baked .env would silently clobber that injection, so the backend would
+# dial localhost inside the container and never reach the neo4j service. For
+# native dev nothing changes: those vars aren't in the OS env, so .env still loads.
 project_root_env = os.path.join(os.path.dirname(__file__), '../../.env')
 
 if os.path.exists(project_root_env):
-    load_dotenv(project_root_env, override=True)
+    load_dotenv(project_root_env, override=False)
 else:
     # If no .env in root, try to load environment variables (for production)
-    load_dotenv(override=True)
+    load_dotenv(override=False)
 
 
 class Config:
