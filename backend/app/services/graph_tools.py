@@ -1181,6 +1181,12 @@ Return the sub-questions as a JSON list."""
             api_data = api_result.get("result", {})
             results_dict = api_data.get("results", {}) if isinstance(api_data, dict) else {}
 
+            # Determine which platforms actually returned results. In single-platform
+            # sims only one prefix is present; emitting a dead "(No response ...)" block
+            # for the absent platform confuses the frontend, so we skip it entirely.
+            has_twitter = any(str(k).startswith("twitter_") for k in results_dict)
+            has_reddit = any(str(k).startswith("reddit_") for k in results_dict)
+
             for i, agent_idx in enumerate(selected_indices):
                 agent = selected_agents[i]
                 agent_name = agent.get("realname", agent.get("username", f"Agent_{agent_idx}"))
@@ -1196,9 +1202,14 @@ Return the sub-questions as a JSON list."""
                 twitter_response = self._clean_tool_call_response(twitter_response)
                 reddit_response = self._clean_tool_call_response(reddit_response)
 
-                twitter_text = twitter_response if twitter_response else "(No response from this platform)"
-                reddit_text = reddit_response if reddit_response else "(No response from this platform)"
-                response_text = f"[Twitter Platform Response]\n{twitter_text}\n\n[Reddit Platform Response]\n{reddit_text}"
+                blocks = []
+                if has_twitter:
+                    twitter_text = twitter_response if twitter_response else "(No response from this platform)"
+                    blocks.append(f"[Twitter Platform Response]\n{twitter_text}")
+                if has_reddit:
+                    reddit_text = reddit_response if reddit_response else "(No response from this platform)"
+                    blocks.append(f"[Reddit Platform Response]\n{reddit_text}")
+                response_text = "\n\n".join(blocks)
 
                 import re
                 combined_responses = f"{twitter_response} {reddit_response}"
