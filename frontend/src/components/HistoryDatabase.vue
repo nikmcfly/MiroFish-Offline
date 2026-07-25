@@ -440,7 +440,10 @@ const loadHistory = async () => {
     loading.value = true
     const response = await getSimulationHistory(20)
     if (response.success) {
-      projects.value = response.data || []
+      // Newest first — backend order is not guaranteed
+      projects.value = (response.data || []).slice().sort(
+        (a, b) => String(b.created_at || '').localeCompare(String(a.created_at || ''))
+      )
     }
   } catch (error) {
     console.error('Failed to load history projects:', error)
