@@ -216,6 +216,10 @@ const CARD_WIDTH = 280
 const CARD_HEIGHT = 280
 const CARD_GAP = 24
 
+// Visible share of the section required to trigger the initial expansion
+// (staying expanded needs any visibility at all — see initObserver)
+const EXPAND_RATIO = 0.4
+
 // Dynamically calculate container height style
 const containerStyle = computed(() => {
   if (!isExpanded.value) {
@@ -462,7 +466,17 @@ const initObserver = () => {
   observer = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
-        const shouldExpand = entry.isIntersecting
+        // Hysteresis: expanding requires a decent share of the section to be
+        // visible, staying expanded only requires *any* visibility.
+        // Without this the section fights itself: expanding grows the observed
+        // container from ~550px (fan) to well over 1500px (grid, once the
+        // record count exceeds one row) while the visible slice stays the same,
+        // so intersectionRatio drops below the lowest threshold and the
+        // observer immediately reports a collapse — the "opens and snaps shut
+        // again" flicker.
+        const shouldExpand = isExpanded.value
+          ? entry.isIntersecting
+          : (entry.isIntersecting && entry.intersectionRatio >= EXPAND_RATIO)
 
         // Update target state to execute (always record latest target state regardless of animation)
         pendingState = shouldExpand
@@ -521,8 +535,11 @@ const initObserver = () => {
       })
     },
     {
-      // Use multiple thresholds for smoother detection
-      threshold: [0.4, 0.6, 0.8],
+      // Use multiple thresholds for smoother detection. The 0 entry is
+      // required: Chromium derives entry.isIntersecting from the crossed
+      // threshold index, so without it any ratio below 0.4 is reported as
+      // "not intersecting" even while the section is clearly on screen.
+      threshold: [0, EXPAND_RATIO, 0.6, 0.8],
       // Adjust rootMargin: shrink viewport bottom upward, require more scrolling to trigger expansion
       rootMargin: '0px 0px -150px 0px'
     }
