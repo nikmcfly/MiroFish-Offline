@@ -103,6 +103,10 @@ else:
         print(f"Loaded environment configuration: {_backend_env}")
 
 
+# Max concurrent LLM requests per platform. With llama.cpp, keep in line with -np.
+OASIS_LLM_SEMAPHORE = int(os.environ.get('OASIS_LLM_SEMAPHORE', '30'))
+
+
 class MaxTokensWarningFilter(logging.Filter):
     """Filter out camel-ai max_tokens warnings (we intentionally don't set max_tokens to let the model decide)"""
 
@@ -1156,7 +1160,7 @@ async def run_twitter_simulation(
         agent_graph=result.agent_graph,
         platform=oasis.DefaultPlatformType.TWITTER,
         database_path=db_path,
-        semaphore=30,  # Limit maximum concurrent LLM requests to prevent API overload
+        semaphore=OASIS_LLM_SEMAPHORE,
     )
     
     await result.env.reset()
@@ -1347,7 +1351,7 @@ async def run_reddit_simulation(
         agent_graph=result.agent_graph,
         platform=oasis.DefaultPlatformType.REDDIT,
         database_path=db_path,
-        semaphore=30,  # Limit maximum concurrent LLM requests to prevent API overload
+        semaphore=OASIS_LLM_SEMAPHORE,
     )
     
     await result.env.reset()

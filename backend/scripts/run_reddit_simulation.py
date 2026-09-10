@@ -47,6 +47,10 @@ else:
         load_dotenv(_backend_env)
 
 
+# Max concurrent LLM requests per platform. With llama.cpp, keep in line with -np.
+OASIS_LLM_SEMAPHORE = int(os.environ.get('OASIS_LLM_SEMAPHORE', '30'))
+
+
 import re
 
 
@@ -578,7 +582,7 @@ class RedditSimulationRunner:
             agent_graph=self.agent_graph,
             platform=oasis.DefaultPlatformType.REDDIT,
             database_path=db_path,
-            semaphore=30,  # Limit maximum concurrent LLM requests to prevent API overload
+            semaphore=OASIS_LLM_SEMAPHORE,
         )
         
         await self.env.reset()
