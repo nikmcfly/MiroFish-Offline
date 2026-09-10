@@ -19,7 +19,7 @@ logger = logging.getLogger('mirofish.embedding')
 
 
 class EmbeddingService:
-    """Generate embeddings using local Ollama server."""
+    """Generate embeddings using a local Ollama or OpenAI-compatible server."""
 
     def __init__(
         self,
