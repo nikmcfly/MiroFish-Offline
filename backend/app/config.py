@@ -40,6 +40,10 @@ class Config:
     # Embedding configuration
     EMBEDDING_MODEL = os.environ.get('EMBEDDING_MODEL', 'nomic-embed-text')
     EMBEDDING_BASE_URL = os.environ.get('EMBEDDING_BASE_URL', 'http://localhost:11434')
+    # 'ollama' -> POST /api/embed, 'openai' -> POST /v1/embeddings (llama.cpp, OpenAI)
+    EMBEDDING_API_STYLE = os.environ.get('EMBEDDING_API_STYLE', 'ollama')
+    # Optional. Sent as a bearer token; Ollama needs none, llama.cpp may (--api-key).
+    EMBEDDING_API_KEY = os.environ.get('EMBEDDING_API_KEY')
 
     # File upload configuration
     MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50MB
