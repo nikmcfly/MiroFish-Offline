@@ -1,3 +1,11 @@
+x-gpu: &gpu
+  resources:
+    reservations:
+      devices:
+        - driver: nvidia
+          count: all
+          capabilities: [gpu]
+
 services:
   mirofish:
     build: .
@@ -12,11 +20,10 @@ services:
     restart: unless-stopped
     volumes:
       - ./backend/uploads:/app/backend/uploads
+    # No LLM backend dependency: those sit behind profiles and calls are lazy.
     depends_on:
       neo4j:
         condition: service_healthy
-      ollama:
-        condition: service_started
 
   neo4j:
     image: neo4j:5.18-community
@@ -40,7 +47,9 @@ services:
       retries: 10
       start_period: 30s
 
+  # docker compose --profile ollama up -d
   ollama:
+    profiles: ["ollama"]
     image: ollama/ollama:latest
     container_name: mirofish-ollama
     ports:
@@ -48,15 +57,62 @@ services:
     volumes:
       - ollama_data:/root/.ollama
     restart: unless-stopped
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
+    deploy: *gpu
+
+  # docker compose --profile llamacpp up -d
+  # Models are fetched from Hugging Face on first start into llamacpp_models.
+  llamacpp-chat:
+    profiles: ["llamacpp"]
+    image: ${LLAMACPP_IMAGE:-ghcr.io/ggml-org/llama.cpp:server-cuda}
+    container_name: mirofish-llamacpp-chat
+    ports:
+      - "8080:8080"
+    environment:
+      - LLAMA_CACHE=/models
+    volumes:
+      - llamacpp_models:/models
+    command: >
+      -hf ${LLAMACPP_CHAT_MODEL:-bartowski/Qwen2.5-32B-Instruct-GGUF:Q4_K_M}
+      --host 0.0.0.0 --port 8080
+      --alias ${LLM_MODEL_NAME:-qwen2.5-32b-instruct}
+      --jinja -np 4 --kv-unified-per-slot 16384
+    restart: unless-stopped
+    deploy: *gpu
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      # generous: the first start downloads the model
+      start_period: 900s
+
+  llamacpp-embed:
+    profiles: ["llamacpp"]
+    image: ${LLAMACPP_IMAGE:-ghcr.io/ggml-org/llama.cpp:server-cuda}
+    container_name: mirofish-llamacpp-embed
+    ports:
+      - "8081:8081"
+    environment:
+      - LLAMA_CACHE=/models
+    volumes:
+      - llamacpp_models:/models
+    # caps at 2048 tokens; ample for MiroFish's 500-char chunks
+    command: >
+      -hf ${LLAMACPP_EMBED_MODEL:-nomic-ai/nomic-embed-text-v1.5-GGUF:Q8_0}
+      --host 0.0.0.0 --port 8081
+      --alias ${EMBEDDING_MODEL:-nomic-embed-text}
+      --embeddings --pooling mean
+    restart: unless-stopped
+    deploy: *gpu
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 300s
 
 volumes:
   neo4j_data:
   neo4j_logs:
   ollama_data:
+  llamacpp_models:
