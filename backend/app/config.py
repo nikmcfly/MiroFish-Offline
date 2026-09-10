@@ -31,6 +31,9 @@ class Config:
     LLM_API_KEY = os.environ.get('LLM_API_KEY')
     LLM_BASE_URL = os.environ.get('LLM_BASE_URL', 'http://localhost:11434/v1')
     LLM_MODEL_NAME = os.environ.get('LLM_MODEL_NAME', 'qwen2.5:32b')
+    # 'ollama' sends num_ctx, 'openai' sends nothing (llama.cpp, OpenAI, Anthropic).
+    # Unset falls back to guessing from the base URL port.
+    LLM_API_STYLE = os.environ.get('LLM_API_STYLE')
 
     # Neo4j configuration
     NEO4J_URI = os.environ.get('NEO4J_URI', 'bolt://localhost:7687')
