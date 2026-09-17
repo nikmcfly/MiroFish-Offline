@@ -40,9 +40,11 @@ class LLMClient:
         # Read from env OLLAMA_NUM_CTX, default 8192 (Ollama default is only 2048).
         self._num_ctx = int(os.environ.get('OLLAMA_NUM_CTX', '8192'))
 
-    def _is_ollama(self) -> bool:
-        """Check if we're talking to an Ollama server."""
-        return '11434' in (self.base_url or '')
+        # Unset falls back to the port heuristic, for configs predating this option.
+        style = (Config.LLM_API_STYLE or '').strip().lower()
+        self._api_style = style or (
+            'ollama' if '11434' in (self.base_url or '') else 'openai'
+        )
 
     def chat(
         self,
@@ -74,7 +76,7 @@ class LLMClient:
             kwargs["response_format"] = response_format
 
         # For Ollama: pass num_ctx via extra_body to prevent prompt truncation
-        if self._is_ollama() and self._num_ctx:
+        if self._api_style == 'ollama' and self._num_ctx:
             kwargs["extra_body"] = {
                 "options": {"num_ctx": self._num_ctx}
             }

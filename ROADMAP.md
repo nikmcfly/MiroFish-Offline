@@ -27,7 +27,8 @@ Fully local fork running on Neo4j CE + Ollama. All Zep Cloud dependencies remove
 
 ### v0.5.0 — Multi-Model Support
 - [ ] Model router: assign different Ollama models to different tasks (fast model for NER, large model for reports)
-- [ ] Support vLLM and llama.cpp as alternative backends alongside Ollama
+- [x] Support llama.cpp as an alternative backend alongside Ollama
+- [ ] Support vLLM as an alternative backend
 - [ ] Add model benchmarking tool: compare NER/RE quality across models on the same seed text
 - [ ] Quantization-aware config: auto-select context window based on available VRAM
 

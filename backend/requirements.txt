@@ -12,7 +12,7 @@ flask-cors>=6.0.0
 # ============= LLM 相关 =============
 # OpenAI SDK（统一使用 OpenAI 格式调用 LLM / Ollama）
 openai>=1.0.0
-# HTTP client for Ollama embedding API
+# HTTP client for the embedding API (Ollama /api/embed or /v1/embeddings)
 requests>=2.28.0
 
 # ============= Neo4j Graph Database =============
