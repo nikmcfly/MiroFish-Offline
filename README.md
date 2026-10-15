@@ -127,7 +127,7 @@ EMBEDDING_MODEL=nomic-embed-text
 EMBEDDING_BASE_URL=http://localhost:11434
 ```
 
-Works with any OpenAI-compatible API — swap Ollama for Claude, GPT, or any other provider by changing `LLM_BASE_URL` and `LLM_API_KEY`.
+For a hosted OpenAI-compatible chat endpoint, change `LLM_BASE_URL`, `LLM_API_KEY`, and `LLM_MODEL_NAME` together. For example, [A2Agent](https://a2agent.me/) uses `https://a2agent.me/v1` as its base URL; select an available model ID from its catalog. Keep `EMBEDDING_BASE_URL` pointed at a working embedding service such as local Ollama: changing the chat URL does not change the embedding backend. This hosted option sends LLM prompts off-device, so use the local default when offline operation is required.
 
 ## Architecture
 
